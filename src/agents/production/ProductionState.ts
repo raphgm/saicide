@@ -142,6 +142,13 @@ export interface ReadinessScorecard {
     weight: number;
     description: string;
   }[];
+  dimensionScores?: {
+    security: number;
+    reliability: number;
+    architecture: number;
+    cost: number;
+    deployment: number;
+  };
 }
 
 export interface ProductionState {

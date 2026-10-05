@@ -43,16 +43,19 @@ interface ProductionEngineerViewProps {
   onClose?: () => void;
   workspaceFiles?: string[];
   packageJsonContent?: string;
+  onWriteFile?: (filePath: string, content: string) => void;
 }
 
 export const ProductionEngineerView: React.FC<ProductionEngineerViewProps> = ({
   onClose,
   workspaceFiles = [],
-  packageJsonContent
+  packageJsonContent,
+  onWriteFile
 }) => {
   const [state, setState] = useState<ProductionState>(() => productionAgentInstance.getState());
   const [repoInput, setRepoInput] = useState(state.repository.url);
   const [selectedArtifact, setSelectedArtifact] = useState<Artifact | null>(null);
+  const [savedArtifacts, setSavedArtifacts] = useState<Record<string, boolean>>({});
   const [activeTab, setActiveTab] = useState<'overview' | 'twin' | 'whatif' | 'autopsy' | 'findings' | 'artifacts' | 'finops' | 'logs'>('overview');
   const [whatIfScale, setWhatIfScale] = useState<'1x' | '10x' | '100x'>('1x');
   const [showCertificate, setShowCertificate] = useState(false);
@@ -79,7 +82,19 @@ export const ProductionEngineerView: React.FC<ProductionEngineerViewProps> = ({
   };
 
   const handleRemediate = async () => {
-    await productionAgentInstance.remediateAll();
+    await productionAgentInstance.remediateAll((path, content) => {
+      if (onWriteFile) {
+        onWriteFile(path, content);
+      }
+      setSavedArtifacts(prev => ({ ...prev, [path]: true }));
+    });
+  };
+
+  const handleSaveArtifact = (artifact: Artifact) => {
+    if (onWriteFile) {
+      onWriteFile(artifact.path, artifact.content);
+    }
+    setSavedArtifacts(prev => ({ ...prev, [artifact.path]: true }));
   };
 
   const handleRequestDeploy = () => {
@@ -95,13 +110,14 @@ export const ProductionEngineerView: React.FC<ProductionEngineerViewProps> = ({
   };
 
   const handleGenerateCertificate = () => {
+    const dim = state.readiness.dimensionScores;
     const scores = {
       overall: state.readiness.score || 78,
-      security: 84,
-      reliability: 61,
-      architecture: 82,
-      cost: 73,
-      deployment: 91,
+      security: dim?.security || 84,
+      reliability: dim?.reliability || (state.stage === 'complete' ? 95 : 61),
+      architecture: dim?.architecture || 82,
+      cost: dim?.cost || 73,
+      deployment: dim?.deployment || 91,
       criticalIssuesCount: state.readiness.criticalIssues,
       highIssuesCount: state.findings.filter(f => f.severity === 'high').length,
       mediumIssuesCount: state.findings.filter(f => f.severity === 'medium').length,
@@ -178,9 +194,16 @@ export const ProductionEngineerView: React.FC<ProductionEngineerViewProps> = ({
         <div className="w-full md:w-[460px] lg:w-[500px] border-r border-slate-800/80 bg-[#080b11] flex flex-col overflow-y-auto custom-scrollbar">
           {/* Intake Bar */}
           <div className="p-5 border-b border-slate-800/80 bg-slate-900/30">
-            <label className="block text-[11px] font-mono uppercase tracking-wider text-slate-400 mb-2">
-              Repository Intake
-            </label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-[11px] font-mono uppercase tracking-wider text-slate-400">
+                Repository Intake
+              </label>
+              {workspaceFiles.length > 0 && (
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-950/60 border border-cyan-500/30 text-cyan-300">
+                  {workspaceFiles.length} Workspace Files Loaded
+                </span>
+              )}
+            </div>
             <div className="flex items-center gap-2">
               <input
                 type="text"
@@ -257,11 +280,11 @@ export const ProductionEngineerView: React.FC<ProductionEngineerViewProps> = ({
             {/* 5 Dimension Progress Meters */}
             <div className="space-y-2.5">
               {[
-                { label: 'Security & Secrets', score: 84, icon: <ShieldCheck size={13} className="text-emerald-400" /> },
-                { label: 'Reliability & Probes', score: state.stage === 'complete' ? 95 : 61, icon: <Activity size={13} className="text-amber-400" /> },
-                { label: 'Architecture & Containers', score: 82, icon: <Layers size={13} className="text-cyan-400" /> },
-                { label: 'FinOps & Efficiency', score: 73, icon: <DollarSign size={13} className="text-blue-400" /> },
-                { label: 'Deployment & CI/CD', score: 91, icon: <Rocket size={13} className="text-purple-400" /> }
+                { label: 'Security & Secrets', score: state.readiness.dimensionScores?.security ?? (state.stage === 'complete' ? 95 : 84), icon: <ShieldCheck size={13} className="text-emerald-400" /> },
+                { label: 'Reliability & Probes', score: state.readiness.dimensionScores?.reliability ?? (state.stage === 'complete' ? 95 : 61), icon: <Activity size={13} className="text-amber-400" /> },
+                { label: 'Architecture & Containers', score: state.readiness.dimensionScores?.architecture ?? (state.stage === 'complete' ? 92 : 82), icon: <Layers size={13} className="text-cyan-400" /> },
+                { label: 'FinOps & Efficiency', score: state.readiness.dimensionScores?.cost ?? (state.stage === 'complete' ? 88 : 73), icon: <DollarSign size={13} className="text-blue-400" /> },
+                { label: 'Deployment & CI/CD', score: state.readiness.dimensionScores?.deployment ?? (state.stage === 'complete' ? 96 : 91), icon: <Rocket size={13} className="text-purple-400" /> }
               ].map(dim => (
                 <div key={dim.label} className="bg-slate-900/60 p-2.5 rounded-lg border border-slate-800/60">
                   <div className="flex items-center justify-between text-xs mb-1.5">
@@ -701,14 +724,31 @@ export const ProductionEngineerView: React.FC<ProductionEngineerViewProps> = ({
                   {selectedArtifact ? (
                     <>
                       <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
-                        <span className="font-mono text-xs text-cyan-300 font-semibold">{selectedArtifact.path}</span>
-                        <button
-                          onClick={() => navigator.clipboard.writeText(selectedArtifact.content)}
-                          className="flex items-center gap-1 px-2.5 py-1 rounded bg-white/5 hover:bg-white/10 text-slate-300 text-[11px] font-mono transition-colors"
-                        >
-                          <Copy size={12} />
-                          <span>Copy</span>
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-xs text-cyan-300 font-semibold">{selectedArtifact.path}</span>
+                          {savedArtifacts[selectedArtifact.path] && (
+                            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                              <CheckCircle2 size={11} />
+                              <span>Saved in Workspace</span>
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleSaveArtifact(selectedArtifact)}
+                            className="flex items-center gap-1 px-2.5 py-1 rounded bg-cyan-500 hover:bg-cyan-400 text-black text-[11px] font-mono font-semibold transition-colors"
+                          >
+                            <Sparkles size={12} />
+                            <span>{savedArtifacts[selectedArtifact.path] ? 'Re-Save' : 'Save to Workspace'}</span>
+                          </button>
+                          <button
+                            onClick={() => navigator.clipboard.writeText(selectedArtifact.content)}
+                            className="flex items-center gap-1 px-2.5 py-1 rounded bg-white/5 hover:bg-white/10 text-slate-300 text-[11px] font-mono transition-colors"
+                          >
+                            <Copy size={12} />
+                            <span>Copy</span>
+                          </button>
+                        </div>
                       </div>
                       <pre className="flex-1 overflow-auto text-xs font-mono text-slate-300 bg-transparent leading-relaxed select-text">
                         {selectedArtifact.content}

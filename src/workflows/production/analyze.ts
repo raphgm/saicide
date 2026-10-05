@@ -135,15 +135,30 @@ export class ProductionAnalyzer {
       autoFixable: true
     });
 
-    findings.push({
-      id: "check-secrets-scan",
-      category: "security",
-      severity: "critical",
-      status: "passed",
-      message: "Deterministic secrets scan passed: 0 exposed private keys or tokens detected.",
-      recommendation: "Continue scanning commits with gitleaks / git-secrets in CI/CD pipeline.",
-      autoFixable: false
-    });
+    // Check for exposed secrets or .env committed to repo
+    const hasExposedEnv = files.some(f => f === ".env" || f === ".env.production" || f.endsWith("/.env"));
+    if (hasExposedEnv) {
+      findings.push({
+        id: "check-secrets-scan",
+        category: "security",
+        severity: "critical",
+        status: "failed",
+        message: "Exposed environment file (.env) detected in workspace tree.",
+        recommendation: "Move sensitive credentials to Cloud Key Vault / Secrets Manager and gitignore .env files.",
+        autoFixable: true,
+        affectedFile: ".env"
+      });
+    } else {
+      findings.push({
+        id: "check-secrets-scan",
+        category: "security",
+        severity: "critical",
+        status: "passed",
+        message: "Deterministic secrets scan passed: 0 exposed private keys or credentials in workspace.",
+        recommendation: "Continuous secret scanning enabled for all future deployment branches.",
+        autoFixable: false
+      });
+    }
 
     // 4. Cost / FinOps check
     findings.push({

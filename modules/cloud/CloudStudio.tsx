@@ -1800,8 +1800,67 @@ const CloudStudio: React.FC<CloudStudioProps> = ({ design, setDesign }) => {
                                           <Suspense fallback={<PaneLoader />}>
                                           <ProductionEngineerView 
                                               onClose={() => setActivePanel(null)} 
-                                              workspaceFiles={Object.keys(fileStructure || {})} 
-                                              packageJsonContent={fileStructure?.['package.json']?.content}
+                                              workspaceFiles={(() => {
+                                                  const collectPaths = (node: FileNode, currentPath = ''): string[] => {
+                                                      const full = currentPath ? `${currentPath}/${node.name}` : node.name;
+                                                      if (node.type === 'file') return [full];
+                                                      return (node.children || []).flatMap(c => collectPaths(c, full));
+                                                  };
+                                                  const rootFiles = (fileStructure?.children || []).flatMap(c => collectPaths(c, ''));
+                                                  return rootFiles.length > 0 ? rootFiles : Object.keys(fileStructure || {});
+                                              })()} 
+                                              packageJsonContent={(() => {
+                                                  const findPkg = (nodes: FileNode[]): string | undefined => {
+                                                      for (const n of nodes) {
+                                                          if (n.name === 'package.json' && n.content) return n.content;
+                                                          if (n.children) {
+                                                              const found = findPkg(n.children);
+                                                              if (found) return found;
+                                                          }
+                                                      }
+                                                      return undefined;
+                                                  };
+                                                  return findPkg(fileStructure?.children || []) || (fileStructure as any)?.['package.json']?.content;
+                                              })()}
+                                              onWriteFile={(filePath: string, content: string) => {
+                                                  setFileStructure(prev => {
+                                                      const parts = filePath.split('/');
+                                                      const fileName = parts.pop()!;
+                                                      
+                                                      const upsertInTree = (nodes: FileNode[], pathParts: string[]): FileNode[] => {
+                                                          if (pathParts.length === 0) {
+                                                              const existingIdx = nodes.findIndex(n => n.name === fileName);
+                                                              if (existingIdx >= 0) {
+                                                                  const updated = [...nodes];
+                                                                  updated[existingIdx] = { ...updated[existingIdx], content, type: 'file' };
+                                                                  return updated;
+                                                              }
+                                                              return [...nodes, { name: fileName, type: 'file', content }];
+                                                          }
+                                                          const folderName = pathParts[0];
+                                                          const remaining = pathParts.slice(1);
+                                                          const folderIdx = nodes.findIndex(n => n.name === folderName && n.type === 'folder');
+                                                          if (folderIdx >= 0) {
+                                                              const updated = [...nodes];
+                                                              updated[folderIdx] = {
+                                                                  ...updated[folderIdx],
+                                                                  children: upsertInTree(updated[folderIdx].children || [], remaining)
+                                                              };
+                                                              return updated;
+                                                          } else {
+                                                              const newFolder: FileNode = {
+                                                                  name: folderName,
+                                                                  type: 'folder',
+                                                                  children: upsertInTree([], remaining)
+                                                              };
+                                                              return [...nodes, newFolder];
+                                                          }
+                                                      };
+
+                                                      const updatedChildren = upsertInTree(prev.children || [], parts);
+                                                      return { ...prev, children: updatedChildren };
+                                                  });
+                                              }}
                                           />
                                           </Suspense>
                                       </div>
