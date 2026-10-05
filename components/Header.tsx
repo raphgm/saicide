@@ -226,6 +226,9 @@ const Header: React.FC<HeaderProps> = ({
                 <div className={`flex items-center justify-center rounded-xl transition-all duration-300 px-2 md:px-3 h-8 bg-black/20 border border-white/10 text-cyan-400 group-hover:bg-cyan-500 group-hover:text-black shadow-[0_0_15px_rgba(103,232,249,0.2)]`}>
                     <span className={`font-michroma font-bold text-[9px] md:text-[10px] tracking-widest`}>SAI</span>
                 </div>
+                <span className="hidden sm:inline-block ml-2 text-[10px] font-mono text-cyan-300/80 uppercase tracking-wider font-semibold border-l border-white/10 pl-2">
+                    Production Engineer
+                </span>
             </div>
 
             {!isLanding && (

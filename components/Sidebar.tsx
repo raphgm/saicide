@@ -56,6 +56,12 @@ const KanbanBoardIcon = ({ size = 20, className = "" }: { size?: number, classNa
 
 const SIDEBAR_GROUPS = [
     {
+        label: "Production",
+        items: [
+            { id: Panel.PRODUCTION_ENGINEER, icon: <Rocket size={20} className="text-cyan-400" />, label: "SAI Engineer", minPlan: 'Hobby' },
+        ]
+    },
+    {
         label: "Core",
         items: [
             { id: Panel.FILES, icon: <Files size={20} />, label: "Explorer", minPlan: 'Hobby' },

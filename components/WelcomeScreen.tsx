@@ -11,7 +11,8 @@ import {
     FileText,
     Compass,
     Network,
-    Lock
+    Lock,
+    Rocket
 } from 'lucide-react';
 import { RecentItem, Panel } from '../types';
 
@@ -113,6 +114,16 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
     
     const BLUEPRINTS = [
         { 
+            id: 'production-engineer', 
+            title: 'SAI Engineer', 
+            description: 'Autonomous Production Engineer: Turn code into production software.', 
+            icon: <Rocket size={20} />, 
+            color: 'text-cyan-400', 
+            bg: 'bg-cyan-950/40',
+            action: () => onChangePanel?.(Panel.PRODUCTION_ENGINEER),
+            locked: false
+        },
+        { 
             id: 'live-meeting', 
             title: 'Live Meeting', 
             description: 'Doodle together. Real-time sync for teams.', 
@@ -175,10 +186,10 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                                Hello, <span className="text-[var(--color-text-accent)]">{userName}</span>.
                             </p>
                             <h1 className="text-5xl md:text-6xl lg:text-7xl font-black text-[var(--color-text-primary)] tracking-tighter mb-4 doodle-text">
-                                Let's <span className="relative inline-block">Code.<svg className="absolute bottom-[-12px] left-0 w-full h-4" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0,5 Q50,10 100,5" stroke="var(--color-text-accent)" strokeWidth="8" fill="none" strokeLinecap="round"/></svg></span> Collaborate. Create.
+                                Your code works. <span className="relative inline-block text-cyan-400">Now make it production-ready.<svg className="absolute bottom-[-12px] left-0 w-full h-4 text-cyan-400" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0,5 Q50,10 100,5" stroke="currentColor" strokeWidth="8" fill="none" strokeLinecap="round"/></svg></span>
                             </h1>
-                            <p className="text-[var(--color-text-secondary)] text-xl max-w-xl font-medium mt-8 leading-relaxed">
-                                Turn your scribbles into logic with Sai. Organic synthesis for a modern, AI-first ecosystem.
+                            <p className="text-[var(--color-text-secondary)] text-xl max-w-2xl font-medium mt-8 leading-relaxed">
+                                SAI analyzes your application, finds production risks, fixes infrastructure problems, estimates cloud cost, and prepares your software for reliable deployment.
                             </p>
                         </div>
                     </div>

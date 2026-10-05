@@ -341,58 +341,60 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onSubscribe }) => {
             </div>
         
             <div className="relative z-10 max-w-5xl mx-auto w-full text-center flex flex-col items-center animate-fade-in">
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-black/20 border border-white/10 mb-8 backdrop-blur-sm shadow-lg animate-fade-in" style={{ animationDelay: '200ms' }}>
-                    <span className="font-doodle text-sm text-cyan-300">Welcome to Sai</span>
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-950/60 border border-cyan-500/30 mb-8 backdrop-blur-sm shadow-lg animate-fade-in" style={{ animationDelay: '200ms' }}>
+                    <span className="font-mono text-xs text-cyan-300 font-semibold tracking-wider">SAI — AI PRODUCTION ENGINEERING</span>
                 </div>
 
-                <h1 className="relative text-6xl md:text-8xl font-black text-white tracking-tighter mb-4 font-doodle leading-none animate-fade-in" style={{ animationDelay: '400ms' }}>
-                    <svg className="absolute -top-12 -right-12 w-24 h-24 text-white/10 -rotate-12 animate-doodle-float z-0" style={{ animationDuration: '10s' }} viewBox="0 0 100 100">
-                        <path d="M50 10 L70 40 L60 40 L60 70 L40 70 L40 40 L30 40 Z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-scribble"/>
-                        <path d="M40 70 L50 90 L60 70" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                    Let's <span className="relative inline-block text-cyan-400">
-                        Code.
+                <h1 className="relative text-5xl md:text-7xl font-black text-white tracking-tight mb-4 font-sans leading-none animate-fade-in" style={{ animationDelay: '400ms' }}>
+                    Your code works. <br className="hidden md:block"/>
+                    <span className="relative inline-block text-cyan-400 mt-2">
+                        Now make it production-ready.
                         <svg className="absolute -bottom-3 left-0 w-full h-4 text-cyan-400" viewBox="0 0 100 10" preserveAspectRatio="none">
                             <path d="M0,5 Q25,10 50,5 T100,5" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" className="animate-scribble"/>
                         </svg>
-                    </span> Collaborate. Create.
+                    </span>
                 </h1>
-                <p className="text-gray-400 text-lg max-w-xl font-medium mt-6 leading-relaxed animate-fade-in" style={{ animationDelay: '600ms' }}>
-                    Turn your scribbles into high-fidelity logical structures. Organic synthesis for a modern, AI-first ecosystem.
+                <p className="text-gray-300 text-lg md:text-xl max-w-2xl font-normal mt-6 leading-relaxed animate-fade-in" style={{ animationDelay: '600ms' }}>
+                    AI can build your application. SAI makes it production-grade. Discover risks, fix infrastructure, simulate multi-cloud costs, and deploy anywhere.
                 </p>
 
-                <form onSubmit={handleBlockedAction} className="relative group w-full max-w-2xl mt-12 animate-fade-in" style={{ animationDelay: '800ms' }}>
-                    {/* Scribble Doodle - Ensure z-0 */}
-                    <svg className="absolute -left-24 -bottom-4 w-48 h-24 text-white/20 rotate-[-15deg] animate-doodle-float z-0" style={{ animationDelay: '1s', animationDuration: '12s' }} viewBox="0 0 200 100">
-                        <path d="M10 80 Q 80 90, 150 50" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="4 4" className="animate-scribble"/>
-                        <path d="M140 60 L150 50 L140 40" fill="none" stroke="currentColor" strokeWidth="2" />
-                        <text x="20" y="60" className="font-doodle text-lg fill-current opacity-70">Sai synthesis</text>
-                    </svg>
-                    {/* Main Input - Ensure z-20 to be on top */}
-                    <div className="relative flex items-center bg-white rounded-full p-2 shadow-2xl shadow-black/30 z-20 transition-transform hover:scale-[1.01]">
-                        <div className="pl-4 pr-3 text-gray-400">
-                            <Paperclip size={24} strokeWidth={2.5} />
+                <div className="relative group w-full max-w-2xl mt-10 animate-fade-in" style={{ animationDelay: '800ms' }}>
+                    {/* Main Input */}
+                    <div className="relative flex items-center bg-slate-900/90 border border-slate-700 rounded-full p-2 shadow-2xl shadow-cyan-950/50 z-20 transition-all hover:border-cyan-500">
+                        <div className="pl-4 pr-3 text-cyan-400">
+                            <Rocket size={22} strokeWidth={2.5} />
                         </div>
-                        <div className="flex-1 text-2xl font-bold text-gray-800 font-doodle h-14 flex items-center">
-                            {userInput || placeholder}
-                            <span className="w-1 h-7 bg-cyan-500 ml-1" style={{ animation: 'cursor-blink 1s infinite' }}></span>
-                        </div>
-                        <button type="submit" className="w-14 h-14 bg-cyan-400 text-black rounded-full hover:bg-cyan-300 transition-all active:scale-95 shadow-lg shadow-cyan-500/20 flex items-center justify-center">
-                            <ArrowRight size={24} strokeWidth={3} />
+                        <input
+                            type="text"
+                            value={userInput}
+                            onChange={(e) => setUserInput(e.target.value)}
+                            placeholder="github.com/org/repo (or click Analyze to test sample)"
+                            className="flex-1 bg-transparent border-none text-base font-mono text-white placeholder-slate-500 focus:outline-none"
+                        />
+                        <button 
+                            type="button" 
+                            onClick={onLaunch}
+                            className="px-6 py-3.5 bg-gradient-to-r from-cyan-400 to-blue-500 text-black font-bold text-xs uppercase tracking-wider rounded-full hover:from-cyan-300 hover:to-blue-400 transition-all active:scale-95 shadow-lg shadow-cyan-500/20 flex items-center gap-2"
+                        >
+                            <span>Analyze a Repository</span>
+                            <ArrowRight size={16} strokeWidth={3} />
                         </button>
                     </div>
-                    {/* Connecting Doodles - Ensure z-0 */}
-                    <div 
-                        ref={formDoodlesRef}
-                        className="absolute top-1/2 left-1/2 w-[1200px] h-[400px] -translate-x-1/2 translate-y-[80px] pointer-events-none opacity-50 z-0">
-                        <svg width="100%" height="100%" viewBox="0 0 1200 400">
-                            <path d="M600,0 C 500,150 300,100 200,300" stroke="rgba(255,255,255,0.1)" strokeWidth="2" fill="none" strokeDasharray="4 4" className="animate-scribble" />
-                            <path d="M600,0 C 650,150 750,120 900,250" stroke="rgba(255,255,255,0.1)" strokeWidth="2" fill="none" strokeDasharray="4 4" className="animate-scribble" />
-                            <path d="M600,0 C 450,250 400,200 450,350" stroke="rgba(255,255,255,0.1)" strokeWidth="2" fill="none" strokeDasharray="4 4" className="animate-scribble" />
-                            <path d="M600,0 C 750,250 800,200 750,350" stroke="rgba(255,255,255,0.1)" strokeWidth="2" fill="none" strokeDasharray="4 4" className="animate-scribble" />
-                        </svg>
+
+                    {/* Supported Ecosystem Badges */}
+                    <div className="mt-5 text-center">
+                        <span className="text-[11px] font-mono uppercase text-slate-500 tracking-wider">
+                            Turn AI-generated code into production software from:
+                        </span>
+                        <div className="flex flex-wrap items-center justify-center gap-2 mt-2 text-xs font-mono text-slate-400">
+                            {['Lovable', 'Cursor', 'Claude Code', 'v0', 'Replit', 'Google AI Studio', 'Bolt', 'GitHub'].map(tool => (
+                                <span key={tool} className="px-2.5 py-1 rounded-md bg-white/5 border border-white/10 text-slate-300">
+                                    {tool}
+                                </span>
+                            ))}
+                        </div>
                     </div>
-                </form>
+                </div>
 
                 {/* Cards Container - Ensure z-20 to be strictly on top of doodles */}
                 <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mt-32 w-full animate-fade-in relative z-20" style={{ animationDelay: '1000ms' }}>

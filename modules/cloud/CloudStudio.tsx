@@ -134,6 +134,7 @@ const IntegrationsPane = React.lazy(() => import('../../components/IntegrationsP
 const PromptLibrary = React.lazy(() => import('../../components/TemplateLibrary'));
 const MicaAssistant = React.lazy(() => import('../../components/MicaAssistant'));
 const MlStudioPane = React.lazy(() => import('../../components/MlStudioPane'));
+const ProductionEngineerView = React.lazy(() => import('../../components/production/ProductionEngineerView'));
 
 // Lazy-loaded Modals
 const CommandPaletteModal = React.lazy(() => import('../../components/modals/CommandPaletteModal'));
@@ -1825,6 +1826,17 @@ const CloudStudio: React.FC<CloudStudioProps> = ({ design, setDesign }) => {
                                       activeModelId={activeModelId}
                                       onRestrictedClick={(feature) => { setUpgradeFeatureName(feature); setIsUpgradeModalOpen(true); }}
                                   />
+                                  {activePanel === Panel.PRODUCTION_ENGINEER && (
+                                      <div className="absolute inset-0 z-50 animate-fade-in backdrop-blur-xl">
+                                          <Suspense fallback={<PaneLoader />}>
+                                          <ProductionEngineerView 
+                                              onClose={() => setActivePanel(null)} 
+                                              workspaceFiles={Object.keys(fileStructure || {})} 
+                                              packageJsonContent={fileStructure?.['package.json']?.content}
+                                          />
+                                          </Suspense>
+                                      </div>
+                                  )}
                                   {isDeploymentCenterOpen && (
                                       <div className="absolute inset-0 z-50 animate-fade-in backdrop-blur-xl">
                                           <Suspense fallback={<PaneLoader />}>
