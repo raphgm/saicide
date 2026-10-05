@@ -14,6 +14,19 @@ const ACCESS_TOKEN_EXPIRY = 60 * 60 * 1000; // 1 hour
 const REFRESH_TOKEN_EXPIRY = 7 * 24 * 60 * 60 * 1000; // 7 days
 const TRIAL_DURATION = 24 * 60 * 60 * 1000; // 1 day trial
 
+// Default unrestricted user for seamless instant access
+export const DEFAULT_UNRESTRICTED_USER: TeamMember = {
+  id: 'sai-engineer',
+  name: 'SAI Engineer',
+  initials: 'SE',
+  role: 'Principal Engineer',
+  status: 'online',
+  email: 'engineer@sai.dev',
+  plan: 'Enterprise',
+  hasAcceptedInvite: true,
+  avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80',
+};
+
 // Valid voucher codes for 1-day Pro trial
 const VALID_VOUCHERS: Record<string, { type: 'trial' | 'discount'; days?: number; discount?: number }> = {
   'SAIPRO24': { type: 'trial', days: 1 },
@@ -190,36 +203,23 @@ const createSession = (user: TeamMember): { user: TeamMember; accessToken: strin
   return { user: sessionUser, accessToken, refreshToken };
 };
 
-// Auth functions
+// Auth functions - zero restrictions
 const signUp = (name: string, email: string, password?: string): Promise<TeamMember> => {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     setTimeout(() => {
-      if (!password || password.length < 6) {
-        return reject(new Error('Password must be at least 6 characters long.'));
-      }
-      
-      // Password strength validation
-      if (!/[A-Z]/.test(password)) {
-        return reject(new Error('Password must contain at least one uppercase letter.'));
-      }
-      if (!/[0-9]/.test(password)) {
-        return reject(new Error('Password must contain at least one number.'));
-      }
-      
+      const safeName = (name && name.trim()) || 'Developer';
+      const safeEmail = (email && email.trim()) || 'developer@sai.dev';
       const users = getStoredUsers();
-      if (users.some(user => user.email.toLowerCase() === email.toLowerCase())) {
-        return reject(new Error('An account with this email already exists.'));
-      }
 
       const newUser: TeamMember = {
         id: `user-${Date.now()}`,
-        name,
-        email,
-        password: hashPassword(password),
-        initials: name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2),
-        role: 'Developer',
+        name: safeName,
+        email: safeEmail,
+        password: password ? hashPassword(password) : undefined,
+        initials: safeName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'SE',
+        role: 'Principal Engineer',
         status: 'online',
-        plan: 'Hobby',
+        plan: 'Enterprise',
       };
 
       users.push(newUser);
@@ -227,37 +227,37 @@ const signUp = (name: string, email: string, password?: string): Promise<TeamMem
       
       const { user } = createSession(newUser);
       resolve(user);
-    }, 500);
+    }, 100);
   });
 };
 
 const signIn = (email: string, password?: string): Promise<TeamMember> => {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     setTimeout(() => {
-      if (!email || !password) {
-        return reject(new Error('Email and password are required.'));
-      }
-      
+      const safeEmail = (email && email.trim()) || 'engineer@sai.dev';
       const users = getStoredUsers();
-      const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+      let user = users.find(u => u.email.toLowerCase() === safeEmail.toLowerCase());
       
       if (!user) {
-        return reject(new Error('No account found with this email.'));
+        user = {
+          id: `user-${Date.now()}`,
+          name: safeEmail.split('@')[0] || 'Developer',
+          email: safeEmail,
+          initials: 'SE',
+          role: 'Principal Engineer',
+          status: 'online',
+          plan: 'Enterprise',
+        };
+        users.push(user);
+        setStoredUsers(users);
+      } else {
+        user = { ...user, plan: 'Enterprise', status: 'online' };
+        setStoredUsers(users.map(u => u.id === user!.id ? user! : u));
       }
       
-      if (!user.password || !verifyPassword(password, user.password)) {
-        return reject(new Error('Invalid password.'));
-      }
-
-      // Update user status to online
-      const updatedUsers = users.map(u => 
-        u.id === user.id ? { ...u, status: 'online' as const } : u
-      );
-      setStoredUsers(updatedUsers);
-      
-      const { user: sessionUser } = createSession({ ...user, status: 'online' });
+      const { user: sessionUser } = createSession(user);
       resolve(sessionUser);
-    }, 500);
+    }, 100);
   });
 };
 
@@ -586,23 +586,22 @@ const refreshSession = (): boolean => {
   }
 };
 
-const getCurrentUser = (): TeamMember | null => {
+const getCurrentUser = (): TeamMember => {
   try {
-    // Check if access token is valid
-    const accessToken = localStorage.getItem(TOKEN_KEY);
-    if (!accessToken || isTokenExpired(accessToken)) {
-      // Try to refresh
-      const refreshed = refreshSession();
-      if (!refreshed) {
-        return null;
+    const sessionJson = localStorage.getItem(SESSION_KEY);
+    if (sessionJson) {
+      const parsed = JSON.parse(sessionJson);
+      if (parsed && typeof parsed === 'object') {
+        return {
+          ...parsed,
+          plan: 'Enterprise',
+          status: 'online'
+        };
       }
     }
-    
-    const sessionJson = localStorage.getItem(SESSION_KEY);
-    return sessionJson ? JSON.parse(sessionJson) : null;
+    return DEFAULT_UNRESTRICTED_USER;
   } catch (error) {
-    console.error('Could not parse session from localStorage', error);
-    return null;
+    return DEFAULT_UNRESTRICTED_USER;
   }
 };
 
@@ -757,61 +756,26 @@ const changePassword = async (currentPassword: string, newPassword: string): Pro
   setStoredUsers(users);
 };
 
-// Authorization functions
-const hasPermission = (permission: string): boolean => {
-  const user = getCurrentUser();
-  if (!user) return false;
-  
-  const userPermissions = PERMISSIONS[user.plan as Plan] || PERMISSIONS.Hobby;
-  return (userPermissions as readonly string[]).includes(permission);
+// Authorization functions - all restrictions removed
+const hasPermission = (_permission: string): boolean => {
+  return true; // All permissions unlocked
 };
 
-const canAccessFeature = (feature: string): boolean => {
-  const featurePermissionMap: Record<string, string> = {
-    'ai-chat': 'use:ai-chat',
-    'live-meeting': 'use:live-meeting',
-    'whiteboard': 'use:whiteboard',
-    'document-studio': 'use:document-studio',
-    'screen-recorder': 'use:screen-recorder',
-    'debug': 'use:debug',
-    'testing': 'use:testing',
-    'api-studio': 'use:api-studio',
-    'database': 'use:database',
-    'terraform': 'use:terraform',
-    'docker': 'use:docker',
-    'security': 'use:security',
-    'deployment': 'use:deployment',
-    'team': 'use:team',
-    'kanban': 'use:kanban',
-    'integrations': 'use:integrations',
-    'personas': 'use:personas',
-    'ml-studio': 'use:ml-studio',
-  };
-  
-  const permission = featurePermissionMap[feature];
-  if (!permission) return true; // Feature not restricted
-  
-  return hasPermission(permission);
+const canAccessFeature = (_feature: string): boolean => {
+  return true; // All features accessible
 };
 
 const getAccessToken = (): string | null => {
   const token = localStorage.getItem(TOKEN_KEY);
   if (!token || isTokenExpired(token)) {
     refreshSession();
-    return localStorage.getItem(TOKEN_KEY);
+    return localStorage.getItem(TOKEN_KEY) || 'sai_unrestricted_token';
   }
   return token;
 };
 
 const isAuthenticated = (): boolean => {
-  const token = localStorage.getItem(TOKEN_KEY);
-  if (!token) return false;
-  
-  if (isTokenExpired(token)) {
-    return refreshSession();
-  }
-  
-  return true;
+  return true; // Zero auth restrictions
 };
 
 // ==================== Voucher/Trial System ====================

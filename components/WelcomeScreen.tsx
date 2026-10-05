@@ -1,49 +1,16 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
-    Plus, 
     ArrowRight, 
-    Settings, 
     Sparkles, 
-    Terminal,
-    Users,
     Bot,
-    CircleDot,
-    FileText,
+    Rocket,
     Compass,
-    Network,
-    Lock,
-    Rocket
+    ShieldCheck,
+    MessageSquare,
+    Terminal,
+    Github
 } from 'lucide-react';
 import { RecentItem, Panel } from '../types';
-
-const BackgroundDoodles = () => (
-    <div className="absolute inset-0 pointer-events-none select-none overflow-hidden opacity-20 text-[var(--color-text-secondary)]">
-        <svg className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] animate-subtle-rotate opacity-30" style={{ animationDuration: '240s' }} viewBox="0 0 400 400">
-            <circle cx="200" cy="200" r="150" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="8, 8" />
-            <path d="M50,200 A150,150 0 0,1 350,200" fill="none" stroke="currentColor" strokeWidth="0.5" />
-            <path d="M200,50 A150,150 0 0,1 200,350" fill="none" stroke="currentColor" strokeWidth="0.5" />
-            <path d="M100,100 L300,300" stroke="currentColor" strokeWidth="0.5" strokeDasharray="4,4" className="animate-flow-dashes" style={{ animationDuration: '5s' }}/>
-            <path d="M100,300 L300,100" stroke="currentColor" strokeWidth="0.5" strokeDasharray="4,4" className="animate-flow-dashes" style={{ animationDuration: '5s', animationDirection: 'reverse' }}/>
-        </svg>
-        <div className="absolute top-[10%] left-[15%] animate-doodle-float" style={{ animationDuration: '12s' }}>
-            <span className="font-mono text-5xl opacity-50">{"{ }"}</span>
-        </div>
-        <svg className="absolute bottom-[15%] right-[10%] w-48 h-32 animate-doodle-float" style={{ animationDuration: '10s', animationDelay: '2s' }} viewBox="0 0 100 100">
-            <path d="M10 90 Q 50 10, 90 90" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="5,5" />
-            <circle cx="10" cy="90" r="3" fill="currentColor" />
-            <circle cx="90" cy="90" r="3" fill="currentColor" />
-        </svg>
-        <svg className="absolute top-[20%] right-[20%] w-24 h-24 animate-doodle-float" style={{ animationDuration: '15s', animationDelay: '1s' }}>
-            <rect x="10" y="10" width="80" height="80" fill="none" stroke="currentColor" strokeWidth="1.5" strokeDasharray="3,3" className="rotate-12" />
-        </svg>
-        <div className="absolute bottom-[25%] left-[20%] animate-doodle-float" style={{ animationDuration: '13s', animationDelay: '3s' }}>
-            <span className="font-mono text-3xl opacity-40">fn()</span>
-        </div>
-        <svg className="absolute top-[60%] right-[30%] w-32 h-20 animate-doodle-float opacity-60" style={{ animationDuration: '11s', animationDelay: '0.5s' }}>
-            <path d="M20 50 A20 20 0 1 1 60 50 A15 15 0 1 1 90 50 A10 10 0 1 1 80 30 A25 25 0 1 1 20 50 Z" fill="currentColor" opacity="0.1" />
-        </svg>
-    </div>
-);
 
 interface WelcomeScreenProps {
     onNewFile: () => void;
@@ -53,7 +20,6 @@ interface WelcomeScreenProps {
     isMac?: boolean;
     onClose?: () => void;
     userName?: string;
-    // Standardized to activeModelId for naming consistency across the app
     activeModelId?: string;
     onAIAppGen?: (prompt: string, mode?: 'chat' | 'app') => void;
     onOpenDocs?: () => void;
@@ -67,191 +33,147 @@ interface WelcomeScreenProps {
 }
 
 const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ 
-    onNewFile, 
-    onOpenCommandPalette, 
-    onOpenSettings, 
+    userName = "Engineer",
     onAIAppGen,
-    onOpenDocs,
-    onOpenRecorder,
-    onOpenCollaboration,
-    onOpenWhiteboard,
     onChangePanel,
-    userName = "Designer",
-    // Standardized to activeModelId
-    activeModelId,
-    recents = [],
-    userPlan = 'Hobby',
-    onRestrictedClick,
 }) => {
-    const isHobby = userPlan === 'Hobby';
     const [prompt, setPrompt] = useState('');
     const scrollContainerRef = useRef<HTMLDivElement>(null);
-    const headerRef = useRef<HTMLDivElement>(null);
-    const searchRef = useRef<HTMLDivElement>(null);
-    const blueprintsRef = useRef<HTMLDivElement>(null);
-    const footerActionsRef = useRef<HTMLDivElement>(null);
 
     const handleAIPromptSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (prompt.trim() && onAIAppGen) {
-            onAIAppGen(prompt, 'app');
+            onAIAppGen(prompt, 'chat');
         }
     };
 
-    useEffect(() => {
-        const scrollContainer = scrollContainerRef.current;
-        if (!scrollContainer) return;
-        const handleScroll = () => {
-            const scrollTop = scrollContainer.scrollTop;
-            if (headerRef.current) headerRef.current.style.transform = `translateY(${scrollTop * 0.4}px)`;
-            if (searchRef.current) searchRef.current.style.transform = `translateY(${scrollTop * 0.2}px)`;
-            if (blueprintsRef.current) blueprintsRef.current.style.transform = `translateY(${scrollTop * 0.1}px)`;
-            if (footerActionsRef.current) footerActionsRef.current.style.transform = `translateY(${scrollTop * 0.05}px)`;
-        };
-        scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
-        return () => scrollContainer.removeEventListener('scroll', handleScroll);
-    }, []);
-    
-    const BLUEPRINTS = [
+    const CORE_ENGINES = [
         { 
             id: 'production-engineer', 
-            title: 'SAI Engineer', 
-            description: 'Autonomous Production Engineer: Turn code into production software.', 
-            icon: <Rocket size={20} />, 
+            title: 'AI Production Engineer', 
+            badge: 'Flagship System',
+            description: 'Analyze repositories, patch vulnerabilities, generate multi-stage Dockerfiles, Terraform IaC, and verify cloud readiness.', 
+            icon: <Rocket size={26} className="text-cyan-400" />, 
             color: 'text-cyan-400', 
-            bg: 'bg-cyan-950/40',
+            bg: 'bg-cyan-950/40 border border-cyan-500/30 hover:border-cyan-400/80 shadow-cyan-950/40',
+            buttonText: 'Launch Production Engineer',
             action: () => onChangePanel?.(Panel.PRODUCTION_ENGINEER),
-            locked: false
         },
         { 
-            id: 'live-meeting', 
-            title: 'Live Meeting', 
-            description: 'Doodle together. Real-time sync for teams.', 
-            icon: <Users size={20} />, 
-            color: 'text-emerald-600', 
-            bg: 'bg-emerald-100',
-            action: isHobby ? () => onRestrictedClick?.('Live Meeting') : onOpenCollaboration,
-            locked: isHobby
-        },
-        { 
-            id: 'whiteboard', 
-            title: 'Whiteboard', 
-            description: 'Freeform canvas for architectural design.', 
-            icon: <Network size={20} />, 
-            color: 'text-purple-600', 
-            bg: 'bg-purple-100',
-            action: isHobby ? () => onRestrictedClick?.('Whiteboard') : onOpenWhiteboard,
-            locked: isHobby
-        },
-        { 
-            id: 'docs', 
-            title: 'Sketchpad', 
-            description: 'Docs and technical specs as a canvas.', 
-            icon: <FileText size={20} />, 
-            color: 'text-indigo-600', 
-            bg: 'bg-indigo-100',
-            action: isHobby ? () => onRestrictedClick?.('Sketchpad') : onOpenDocs,
-            locked: isHobby
-        },
-        { 
-            id: 'recorder', 
-            title: 'Demo Catcher', 
-            description: 'Record screen and camera instantly.', 
-            icon: <CircleDot size={20} />, 
-            color: 'text-rose-600', 
-            bg: 'bg-rose-100',
-            action: isHobby ? () => onRestrictedClick?.('Demo Catcher') : onOpenRecorder,
-            locked: isHobby
-        },
-        { 
-            id: 'agent', 
-            title: 'AI Chat', 
-            description: 'An AI that thinks in logic scribbles.', 
-            icon: <Bot size={20} />, 
-            color: 'text-blue-600', 
-            bg: 'bg-blue-100',
-            action: isHobby ? () => onRestrictedClick?.('AI Chat') : () => onAIAppGen?.("Let's start a new architectural discussion.", 'chat'),
-            locked: isHobby
+            id: 'ai-chat', 
+            title: 'AI Chat Assistant', 
+            badge: 'Pair Programming',
+            description: 'Direct dialogue with Gemini, Claude, and GPT models for architecture consultations, debugging, and code generation.', 
+            icon: <Bot size={26} className="text-blue-400" />, 
+            color: 'text-blue-400', 
+            bg: 'bg-blue-950/40 border border-blue-500/30 hover:border-blue-400/80 shadow-blue-950/40',
+            buttonText: 'Open AI Chat',
+            action: () => onAIAppGen?.("Let's analyze this codebase and prepare it for production.", 'chat'),
         },
     ];
 
     return (
-        <div ref={scrollContainerRef} className="h-full w-full bg-[var(--color-background)] relative overflow-y-auto custom-scrollbar flex flex-col p-8 md:p-16 text-[var(--color-text-primary)]">
-            <BackgroundDoodles />
-            <div className="relative z-10 max-w-5xl mx-auto w-full">
-                <div ref={headerRef} style={{ willChange: 'transform' }}>
-                    <div className="flex justify-between items-start mb-12">
-                        <div className="animate-fade-in">
-                            <p className="text-3xl md:text-4xl text-[var(--color-text-secondary)] doodle-text mb-4">
-                               Hello, <span className="text-[var(--color-text-accent)]">{userName}</span>.
-                            </p>
-                            <h1 className="text-5xl md:text-6xl lg:text-7xl font-black text-[var(--color-text-primary)] tracking-tighter mb-4 doodle-text">
-                                Your code works. <span className="relative inline-block text-cyan-400">Now make it production-ready.<svg className="absolute bottom-[-12px] left-0 w-full h-4 text-cyan-400" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0,5 Q50,10 100,5" stroke="currentColor" strokeWidth="8" fill="none" strokeLinecap="round"/></svg></span>
-                            </h1>
-                            <p className="text-[var(--color-text-secondary)] text-xl max-w-2xl font-medium mt-8 leading-relaxed">
-                                SAI analyzes your application, finds production risks, fixes infrastructure problems, estimates cloud cost, and prepares your software for reliable deployment.
-                            </p>
-                        </div>
+        <div ref={scrollContainerRef} className="h-full w-full bg-[#0a0d14] relative overflow-y-auto custom-scrollbar flex flex-col p-8 md:p-14 text-slate-100">
+            {/* Subtle background glow */}
+            <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-cyan-500/10 blur-[120px] pointer-events-none rounded-full" />
+            
+            <div className="relative z-10 max-w-4xl mx-auto w-full my-auto">
+                <div className="text-center mb-10">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/60 border border-cyan-500/30 text-cyan-300 text-xs font-mono mb-4 backdrop-blur-md">
+                        <Sparkles size={13} className="text-cyan-400" />
+                        <span>SAI — Software to Production</span>
                     </div>
+
+                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white tracking-tight">
+                        Your code works. <br />
+                        <span className="bg-gradient-to-r from-cyan-400 via-teal-300 to-blue-500 bg-clip-text text-transparent">
+                            Now make it production-ready.
+                        </span>
+                    </h1>
+                    
+                    <p className="text-slate-400 text-base md:text-lg max-w-2xl mx-auto mt-4 leading-relaxed">
+                        Welcome back, <strong className="text-white">{userName}</strong>. SAI combines autonomous production engineering with conversational AI to verify, containerize, and deploy software.
+                    </p>
                 </div>
 
-                <div ref={searchRef} className="mb-24 w-full" style={{ willChange: 'transform' }}>
+                {/* AI Prompt Input Bar */}
+                <div className="mb-12 w-full">
                     <form onSubmit={handleAIPromptSubmit} className="relative group">
-                        <div className="relative flex items-center bg-white sketch-border sketch-shadow shadow-[inset_0_2px_4px_0_rgba(0,0,0,0.06)] p-2 transition-all group-focus-within:-translate-y-1 group-focus-within:shadow-xl">
-                            <div className="pl-4 pr-3 text-gray-400 group-focus-within:text-[var(--color-text-accent)] transition-colors">
-                                <Compass size={24} strokeWidth={2.5} />
+                        <div className="relative flex items-center bg-slate-900/90 border border-slate-700/80 rounded-2xl p-2 shadow-2xl group-focus-within:border-cyan-500/80 transition-all">
+                            <div className="pl-4 pr-3 text-cyan-400">
+                                <Compass size={22} strokeWidth={2.5} />
                             </div>
                             <input 
                                 type="text" 
                                 value={prompt}
                                 onChange={(e) => setPrompt(e.target.value)}
-                                placeholder="What should we build today in Sai?..."
-                                className="flex-1 bg-transparent text-gray-800 text-2xl font-bold focus:outline-none doodle-text h-14 placeholder-gray-400"
+                                placeholder="Ask AI Chat or describe what repository to harden..."
+                                className="flex-1 bg-transparent text-white text-base font-mono focus:outline-none placeholder-slate-500"
                             />
-                            <button type="submit" className="p-3 bg-[var(--color-accent)] text-white rounded-2xl hover:bg-[var(--color-accent-hover)] transition-all active:scale-95 shadow-lg shadow-blue-500/20">
-                                <ArrowRight size={24} strokeWidth={3} />
+                            <button 
+                                type="submit" 
+                                className="px-5 py-3 bg-gradient-to-r from-cyan-400 to-blue-500 text-black font-extrabold text-xs uppercase tracking-wider rounded-xl hover:from-cyan-300 hover:to-blue-400 transition-all active:scale-95 shadow-lg shadow-cyan-500/20 flex items-center gap-1.5"
+                            >
+                                <span>Send</span>
+                                <ArrowRight size={16} />
                             </button>
                         </div>
                     </form>
                 </div>
 
-                <div ref={blueprintsRef} style={{ willChange: 'transform' }}>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-                        {BLUEPRINTS.map(bp => (
-                            <button 
-                                key={bp.id} 
-                                onClick={() => bp.action?.()}
-                                className={`text-left bg-white sketch-border sketch-shadow p-6 group hover:-translate-y-2 transition-all relative ${bp.locked ? 'opacity-75' : ''}`}
-                            >
-                                 {bp.locked && (
-                                    <div className="absolute top-3 right-3 w-6 h-6 bg-amber-100 rounded-full flex items-center justify-center">
-                                        <Lock size={12} className="text-amber-600" />
+                {/* Core Two Engines (AI Production Engineer & AI Chat) */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {CORE_ENGINES.map(engine => (
+                        <div
+                            key={engine.id}
+                            className={`p-7 rounded-3xl transition-all flex flex-col justify-between shadow-2xl relative group ${engine.bg}`}
+                        >
+                            <div>
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                        {engine.icon}
                                     </div>
-                                 )}
-                                 <div className="absolute -bottom-2 -right-2 w-12 h-12 border-2 border-dashed border-gray-200 rounded-xl transition-transform group-hover:-translate-x-1 group-hover:-translate-y-1"></div>
-                                <div className={`w-14 h-14 rounded-2xl ${bp.bg} ${bp.color} flex items-center justify-center mb-6 shadow-sm group-hover:scale-110 transition-transform`}>
-                                    {bp.icon}
+                                    <span className="text-[10px] font-mono uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-slate-300">
+                                        {engine.badge}
+                                    </span>
                                 </div>
-                                <h3 className="font-black text-gray-900 mb-2 doodle-text text-xl">{bp.title}</h3>
-                                <p className="text-xs text-gray-500 font-bold leading-relaxed">{bp.description}</p>
-                                {bp.locked && <p className="text-[10px] text-amber-600 font-bold mt-2">Pro Feature</p>}
+                                <h3 className="text-xl font-bold text-white mb-2">{engine.title}</h3>
+                                <p className="text-xs text-slate-300 leading-relaxed">{engine.description}</p>
+                            </div>
+
+                            <button
+                                onClick={engine.action}
+                                className="mt-6 w-full py-3.5 bg-white/10 hover:bg-cyan-500 hover:text-black text-white font-extrabold text-xs uppercase tracking-wider rounded-xl border border-white/10 hover:border-cyan-400 transition-all flex items-center justify-center gap-2 group-hover:shadow-lg"
+                            >
+                                <span>{engine.buttonText}</span>
+                                <ArrowRight size={14} />
                             </button>
-                        ))}
-                    </div>
+                        </div>
+                    ))}
                 </div>
 
-                <div ref={footerActionsRef} style={{ willChange: 'transform' }}>
-                    <div className="mt-20 pt-16 border-t-2 border-dashed border-gray-200 flex flex-wrap gap-6 justify-center">
-                        <button onClick={onNewFile} className="flex items-center gap-2.5 text-sm font-black text-[var(--color-text-secondary)] hover:text-[var(--color-text-accent)] transition-all hover:scale-105">
-                            <Plus size={16} strokeWidth={3} /> New Draft
-                        </button>
-                        <button onClick={onOpenCommandPalette} className="flex items-center gap-2.5 text-sm font-black text-[var(--color-text-secondary)] hover:text-[var(--color-text-accent)] transition-all hover:scale-105">
-                            <Terminal size={16} strokeWidth={3} /> Run Cmd
-                        </button>
-                        <button onClick={onOpenSettings} className="flex items-center gap-2.5 text-sm font-black text-[var(--color-text-secondary)] hover:text-[var(--color-text-accent)] transition-all hover:scale-105">
-                            <Settings size={16} strokeWidth={3} /> Config
-                        </button>
-                    </div>
+                {/* Quick Shortcuts Bar */}
+                <div className="mt-12 pt-8 border-t border-slate-800/80 flex items-center justify-center gap-6 text-xs text-slate-500 font-mono">
+                    <button 
+                        onClick={() => onChangePanel?.(Panel.PRODUCTION_ENGINEER)}
+                        className="hover:text-cyan-400 transition-colors flex items-center gap-1.5"
+                    >
+                        <ShieldCheck size={14} /> 5-Pillar Scorecard
+                    </button>
+                    <span>&bull;</span>
+                    <button 
+                        onClick={() => onAIAppGen?.("Show me how to deploy this to Azure Container Apps", 'chat')}
+                        className="hover:text-cyan-400 transition-colors flex items-center gap-1.5"
+                    >
+                        <Terminal size={14} /> Azure ACA Deployment
+                    </button>
+                    <span>&bull;</span>
+                    <button 
+                        onClick={() => onAIAppGen?.("Analyze multi-cloud costs and FinOps arbitrage", 'chat')}
+                        className="hover:text-cyan-400 transition-colors flex items-center gap-1.5"
+                    >
+                        <MessageSquare size={14} /> FinOps Analysis
+                    </button>
                 </div>
             </div>
         </div>

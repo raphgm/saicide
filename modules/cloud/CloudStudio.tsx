@@ -19,7 +19,7 @@ import {
   INITIAL_AGENDA_ITEMS
 } from '../../constants';
 import { THEMES } from '../../themes';
-import authService from '../../services/authService';
+import authService, { DEFAULT_UNRESTRICTED_USER } from '../../services/authService';
 import aiService from '../../services/geminiService';
 import { useMCP } from '../../hooks/useMCP';
 import { 
@@ -204,12 +204,14 @@ interface CloudStudioProps {
 }
 
 const CloudStudio: React.FC<CloudStudioProps> = ({ design, setDesign }) => {
-  const [currentUser, setCurrentUser] = useState<TeamMember | null>(null);
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
-  const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.HUB);
+  const [currentUser, setCurrentUser] = useState<TeamMember | null>(() => {
+    return authService.getCurrentUser() || DEFAULT_UNRESTRICTED_USER;
+  });
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([DEFAULT_UNRESTRICTED_USER]);
+  const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.WORKSPACE);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   
-  const [activePanel, setActivePanel] = useState<Panel | null>(null);
+  const [activePanel, setActivePanel] = useState<Panel | null>(Panel.PRODUCTION_ENGINEER);
   const [isDeploymentCenterOpen, setIsDeploymentCenterOpen] = useState(false);
   const [isTeamChannelPoppedOut, setIsTeamChannelPoppedOut] = useState(false);
   
@@ -1491,10 +1493,12 @@ const CloudStudio: React.FC<CloudStudioProps> = ({ design, setDesign }) => {
   };
   
   const handlePanelChange = (panel: Panel) => {
-    if (panel === Panel.DEPLOYMENT) {
-        setIsDeploymentCenterOpen(true);
+    if (panel === Panel.CHAT) {
+      setIsChatOpen(prev => !prev);
+    } else if (panel === Panel.DEPLOYMENT) {
+      setIsDeploymentCenterOpen(true);
     } else {
-        setActivePanel(activePanel === panel ? null : panel);
+      setActivePanel(activePanel === panel ? null : panel);
     }
   };
 
@@ -1562,13 +1566,13 @@ const CloudStudio: React.FC<CloudStudioProps> = ({ design, setDesign }) => {
   return (
     <div className="flex flex-col h-screen bg-[var(--color-background)] text-[var(--color-text-primary)] relative overflow-hidden">
       <Header 
-        models={AI_MODELS_DATA} activeModelId={activeModelId} onModelChange={setActiveModelId} teamMembers={teamMembers} currentUser={currentUser} onSignIn={() => setIsAuthModalOpen(true)} onSignOut={() => { authService.signOut(); setCurrentUser(null); }} onInvite={() => setIsInviteModalOpen(true)} isLanding={!currentUser} isChatOpen={isChatOpen} onToggleChat={() => { if (currentUser?.plan === 'Hobby') { setUpgradeFeatureName('AI Chat'); setIsUpgradeModalOpen(true); } else { setIsChatOpen(!isChatOpen); } }} isSidebarVisible={isSidebarVisible} onToggleSidebar={() => setIsSidebarVisible(!isSidebarVisible)} onOpenProfile={() => { setIdentityInitialTab('profile'); setIsIdentityDashboardOpen(true); }} mcpServers={mcpServers} onToggleMcp={handleToggleMcp} onStatusChange={(status) => currentUser && setCurrentUser({ ...currentUser, status })} menuCategories={menuCategories} isLive={isLiveSession} onOpenVoiceCommand={() => setIsVoiceCommandOpen(true)}
+        models={AI_MODELS_DATA} activeModelId={activeModelId} onModelChange={setActiveModelId} teamMembers={teamMembers} currentUser={currentUser} onSignIn={() => { setViewMode(ViewMode.WORKSPACE); setActivePanel(Panel.PRODUCTION_ENGINEER); }} onSignOut={() => { setCurrentUser(DEFAULT_UNRESTRICTED_USER); }} onInvite={() => setIsInviteModalOpen(true)} isLanding={false} isChatOpen={isChatOpen} onToggleChat={() => setIsChatOpen(!isChatOpen)} isSidebarVisible={isSidebarVisible} onToggleSidebar={() => setIsSidebarVisible(!isSidebarVisible)} onOpenProfile={() => { setIdentityInitialTab('profile'); setIsIdentityDashboardOpen(true); }} mcpServers={mcpServers} onToggleMcp={handleToggleMcp} onStatusChange={(status) => currentUser && setCurrentUser({ ...currentUser, status })} menuCategories={menuCategories} isLive={isLiveSession} onOpenVoiceCommand={() => setIsVoiceCommandOpen(true)}
         activePanel={activePanel} onPanelChange={handlePanelChange} onToggleTerminal={() => setTerminalHeight(prev => prev === 0 ? 250 : 0)} isTerminalOpen={terminalHeight > 0} onRun={handleQuickRun} onBuild={() => setIsBuildPreviewOpen(true)} 
         isCallMinimized={isCallMinimized}
         onToggleCallMinimize={() => setIsCallMinimized(p => !p)}
         isMicOn={isMicOn}
         onToggleMic={() => setIsMicOn(p => !p)}
-        onUpgradeClick={() => { setUpgradeFeatureName("Premium Features"); setIsUpgradeModalOpen(true); }}
+        onUpgradeClick={() => {}}
       />
       
       {isLiveSession && currentUser && (
@@ -1626,7 +1630,18 @@ const CloudStudio: React.FC<CloudStudioProps> = ({ design, setDesign }) => {
 
       <div className="flex-1 flex flex-col pt-14 overflow-y-auto custom-scrollbar relative">
         {!currentUser ? (
-          <LandingPage onLaunch={() => setIsAuthModalOpen(true)} onSubscribe={() => setIsAuthModalOpen(true)} />
+          <LandingPage 
+            onLaunch={() => {
+              setCurrentUser(DEFAULT_UNRESTRICTED_USER);
+              setViewMode(ViewMode.WORKSPACE);
+              setActivePanel(Panel.PRODUCTION_ENGINEER);
+            }} 
+            onSubscribe={() => {
+              setCurrentUser(DEFAULT_UNRESTRICTED_USER);
+              setViewMode(ViewMode.WORKSPACE);
+              setActivePanel(Panel.PRODUCTION_ENGINEER);
+            }} 
+          />
         ) : (
           <>
               {viewMode === ViewMode.HUB ? (
@@ -1657,11 +1672,15 @@ const CloudStudio: React.FC<CloudStudioProps> = ({ design, setDesign }) => {
                   </Suspense>
               ) : (
                   <div className="flex-1 flex overflow-x-auto md:overflow-hidden relative animate-fade-in h-full">
-                      {/* Global Workspace Doodles */}
-                      <WorkspaceDoodles />
-
                       {isSidebarVisible && (
-                          <Sidebar activePanel={activePanel} onPanelChange={handlePanelChange} userPlan={currentUser.plan} onRestrictedClick={(feature) => { setUpgradeFeatureName(feature); setIsUpgradeModalOpen(true); }} pendingChangesCount={unstagedChanges.length + stagedChanges.length} />
+                          <Sidebar 
+                            activePanel={activePanel} 
+                            onPanelChange={handlePanelChange} 
+                            userPlan={currentUser?.plan || 'Enterprise'} 
+                            onRestrictedClick={() => {}} 
+                            pendingChangesCount={unstagedChanges.length + stagedChanges.length}
+                            isChatOpen={isChatOpen}
+                          />
                       )}
                       
                       {/* HUB Switcher Button in Sidebar Bottom */}
