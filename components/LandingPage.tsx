@@ -1,874 +1,1095 @@
-
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  Users, 
-  FileText, 
-  Bot, 
-  Paperclip,
   ArrowRight,
-  Cpu,
   ShieldCheck,
-  Layers,
-  MessageSquare,
-  Github,
-  Pencil,
+  ShieldAlert,
   Rocket,
-  BookOpen,
   Terminal,
-  BrainCircuit,
   CheckCircle,
-  Plus,
-  X,
-  GitCommit,
-  MessageCircle,
-  Network,
-  Container,
+  XCircle,
+  AlertTriangle,
+  Server,
+  Database,
+  Lock,
   Workflow,
-  LayoutGrid,
-  ListChecks,
-  CheckSquare,
-  ImageIcon,
-  Video,
-  Mic,
-  Code2,
+  Container,
   Zap,
   Activity,
-  Sparkles,
   CreditCard,
-  Check
+  Check,
+  Github,
+  Gauge,
+  BarChart3,
+  ExternalLink,
+  Copy,
+  ChevronRight,
+  DollarSign,
+  Cpu,
+  Layers,
+  Sparkles,
+  KeyRound,
+  Network
 } from 'lucide-react';
 import Footer from './Footer';
-import { MOCK_TEAM_MEMBERS, INITIAL_DISCUSSIONS, INITIAL_AGENDA_ITEMS } from '../constants';
-import { PLANS } from '../services/paystackService';
 
 interface LandingPageProps {
   onLaunch: () => void;
   onSubscribe: () => void;
 }
 
-const BLUEPRINTS = [
-    { 
-        id: 'collab', 
-        title: 'Live Meeting', 
-        description: 'Doodle together. Real-time sync for teams.', 
-        icon: <Users size={24} className="text-emerald-500" />,
-    },
-    { 
-        id: 'whiteboard', 
-        title: 'Whiteboard', 
-        description: 'Freeform canvas for architectural design.', 
-        icon: <Network size={24} className="text-purple-500" />,
-    },
-    { 
-        id: 'docs', 
-        title: 'Sketchpad', 
-        description: 'Docs and technical specs as a canvas.', 
-        icon: <FileText size={24} className="text-blue-500" />,
-    },
-    { 
-        id: 'recorder', 
-        title: 'Demo Catcher', 
-        description: 'Record screen and camera instantly.', 
-        icon: <div className="w-6 h-6 flex items-center justify-center"><div className="w-3 h-3 rounded-full bg-red-500 ring-4 ring-red-500/30"></div></div>,
-    },
-    { 
-        id: 'agent', 
-        title: 'AI Chat', 
-        description: 'An AI that thinks in logic scribbles.', 
-        icon: <Bot size={24} className="text-indigo-500" />,
-    },
+const ECOSYSTEM_TOOLS = [
+  'Lovable',
+  'Cursor',
+  'Claude Code',
+  'v0',
+  'Replit',
+  'Google AI Studio',
+  'Bolt.new',
+  'GitHub Copilot'
 ];
 
-const DOC_CONTENT = {
-  "Universal Terminal": {
-    title: "Universal Terminal",
-    description: "A fully-featured shell environment right in your browser.",
-    content: (
-      <div className="prose prose-sm max-w-none text-slate-600 leading-relaxed">
-        <p>The Universal Terminal provides a sandboxed POSIX environment with common shell commands and language runtimes like Node.js, Python, Go, and Rust. It's designed for quick scripts, package management, and running build processes without leaving your browser.</p>
-        <h4 className="font-bold text-slate-700">Key Features:</h4>
-        <ul className="list-disc pl-5 space-y-1">
-            <li><strong>AI Integration:</strong> Type a natural language command (e.g., "find all files larger than 1MB") and press Tab to have the AI generate and suggest the correct shell command.</li>
-            <li><strong>Persistent Sessions:</strong> Your terminal state, including history and environment variables, is saved across reloads within your workspace.</li>
-            <li><strong>Multi-Tab Support:</strong> Run multiple terminal sessions side-by-side for parallel tasks.</li>
-            <li><strong>Workspace Aware:</strong> The terminal starts in your project's root directory, with access to all your files.</li>
-        </ul>
-        <h4 className="font-bold text-slate-700">Example Command:</h4>
-        <pre className="bg-slate-100 p-3 rounded-lg text-xs"><code># sai synth "a REST API with an endpoint /users" --lang=go</code></pre>
-      </div>
-    )
+const CAPABILITY_CARDS = [
+  {
+    id: 'scorecard',
+    title: '5-Pillar Scorecard',
+    category: 'Assessment',
+    description: 'Deterministic scanning across Security, Reliability, Architecture, FinOps, and Deployment.',
+    icon: <Gauge className="text-cyan-400" size={24} />,
+    stat: '100 Point Audit'
   },
-  "UX Studio": {
-    title: "UX Studio",
-    description: "Prototype components, map user flows, and manage design systems with AI.",
-    content: (
-      <div className="prose prose-sm max-w-none text-slate-600 leading-relaxed">
-        <p>The UX Studio is a suite of AI-powered tools designed for product designers and frontend engineers to bridge the gap between idea and implementation. It focuses on rapid prototyping, user flow visualization, and maintaining a consistent design system.</p>
-        <h4 className="font-bold text-slate-700">Available Tools:</h4>
-        <ul className="list-disc pl-5 space-y-1">
-            <li><strong>Flow Synthesizer:</strong> Describe a user journey in plain language (e.g., "a user signs up, creates a profile, and posts a message") and the AI will generate a complete user flow diagram.</li>
-            <li><strong>Component Critic:</strong> Get instant, AI-driven feedback on your UI components. The critic analyzes accessibility (WCAG), responsiveness, and adherence to design system principles.</li>
-            <li><strong>Design System Manager:</strong> Automatically document your components, generate variations, and ensure consistency across your entire application.</li>
-        </ul>
-      </div>
-    )
+  {
+    id: 'twin',
+    title: 'Application Twin',
+    category: 'Architecture',
+    description: 'Auto-maps reverse-engineered topologies: frontends, APIs, databases, caches, and egress paths.',
+    icon: <Network className="text-blue-400" size={24} />,
+    stat: 'Live Graph'
   },
-  "Governance": {
-    title: "Governance & Security",
-    description: "Define and enforce security policies for your infrastructure and code.",
-    content: (
-        <div className="prose prose-sm max-w-none text-slate-600 leading-relaxed">
-            <p>Sai's Governance module acts as a real-time sentinel for your codebase and infrastructure definitions. It ensures your projects adhere to security best practices and compliance standards automatically.</p>
-            <h4 className="font-bold text-slate-700">Core Concepts:</h4>
-            <ul className="list-disc pl-5 space-y-1">
-                <li><strong>Policy as Code:</strong> Define rules in a simple, readable format (e.g., "No Public S3 Buckets", "Mandatory CostCenter Tag").</li>
-                <li><strong>Real-time Scanning:</strong> The system continuously scans your Terraform, Dockerfiles, and application code for policy violations.</li>
-                <li><strong>Automated Remediation:</strong> For certain violations, the AI can suggest and apply a fix with a single click, hardening your infrastructure automatically.</li>
-                <li><strong>Compliance Reporting:</strong> Generate reports for standards like SOC2, HIPAA, and GDPR based on your enforced policies and detected infrastructure.</li>
-            </ul>
-        </div>
-    )
+  {
+    id: 'whatif',
+    title: 'What-If Simulator',
+    category: 'Reliability',
+    description: 'Stress-tests DB connections, egress, and memory at 10k, 100k, and 1M daily requests before launch.',
+    icon: <BarChart3 className="text-amber-400" size={24} />,
+    stat: '1× to 100× Traffic'
   },
-  "Container Studio": {
-    title: "Container Studio",
-    description: "Synthesize, manage, and optimize Docker images and containers.",
-    content: (
-      <div className="prose prose-sm max-w-none text-slate-600 leading-relaxed">
-        <p>The Container Studio provides a complete lifecycle management suite for your containerized applications. From AI-powered Dockerfile generation to a real-time fleet overview, it streamlines your entire container workflow.</p>
-        <h4 className="font-bold text-slate-700">Key Features:</h4>
-        <ul className="list-disc pl-5 space-y-1">
-            <li><strong>Dockerfile Synthesis:</strong> Describe your application's needs (e.g., "a production-ready Node.js app") and let the AI generate an optimized, multi-stage Dockerfile.</li>
-            <li><strong>Neural Hardening:</strong> Use the AI to scan your Dockerfiles for security vulnerabilities and apply best practices automatically, reducing image size and attack surface.</li>
-            <li><strong>Workspace Fleet Management:</strong> View and manage all Docker images and running containers within your local workspace. Start, stop, and inspect containers with a single click.</li>
-            <li><strong>Registry Integration:</strong> Connect to Docker Hub, GitHub Container Registry, and other private registries to pull and push images.</li>
-        </ul>
-      </div>
-    )
+  {
+    id: 'finops',
+    title: 'FinOps Cloud Arbitrage',
+    category: 'Cost Defense',
+    description: 'Deploys directly to Azure ACA, AWS, or GCP—eliminating 10× proprietary PaaS bandwidth markups.',
+    icon: <DollarSign className="text-emerald-400" size={24} />,
+    stat: '~$1,756/mo Saved'
   },
-  "API Studio": {
-    title: "API Studio",
-    description: "A comprehensive toolkit for designing, testing, and generating APIs.",
-    content: (
-      <div className="prose prose-sm max-w-none text-slate-600 leading-relaxed">
-        <p>API Studio is your central hub for API development. It combines an intuitive HTTP client for testing endpoints with a powerful AI "Forge" for scaffolding entire API backends from a simple design interface.</p>
-        <h4 className="font-bold text-slate-700">Key Components:</h4>
-        <ul className="list-disc pl-5 space-y-1">
-            <li><strong>API Client:</strong> A full-featured HTTP client to send requests, manage headers, parameters, and bodies. Inspect responses, status codes, and timings in a clean interface.</li>
-            <li><strong>API Forge:</strong> Visually design your API endpoints (paths, methods, descriptions). The Forge uses this design to synthesize a complete backend implementation in your chosen language (Node.js, Go, Python, Rust).</li>
-            <li><strong>Automated Documentation:</strong> The AI can generate OpenAPI/Swagger specs from your existing code or from the visual designs in the Forge.</li>
-            <li><strong>Integration with Run & Debug:</strong> Directly run your forged API and test it with the client, all within the same environment.</li>
-        </ul>
-      </div>
-    )
+  {
+    id: 'remediate',
+    title: 'Autopsy & Remediation',
+    category: 'Production',
+    description: 'Generates non-root Dockerfiles, health probes, Terraform IaC, and signed Production Certificates.',
+    icon: <ShieldCheck className="text-purple-400" size={24} />,
+    stat: 'Deterministic IaC'
   }
-};
-
-const activityFeed = [
-    { user: 'Alex C.', action: "pushed 3 commits to 'neural-ux-lab'", time: '2m ago', icon: <GitCommit size={14} className="text-blue-500" /> },
-    { user: 'Sarah J.', action: "commented on 'Mobile Grid Fix'", time: '15m ago', icon: <MessageCircle size={14} className="text-green-500" /> },
-    { user: 'Mike R.', action: "deployed 'hyper-commerce' to staging", time: '45m ago', icon: <Rocket size={14} className="text-purple-500" /> },
-    { user: 'Emily B.', action: "opened a new issue: 'Add dark mode'", time: '1h ago', icon: <Pencil size={14} className="text-orange-500" /> },
 ];
 
-const MOCK_LLMS = [
-    'Starling-7B', 'Nexus-Raven', 'Zephyr-12B', 'Whisper-Large', 'Llama-3-70B',
-    'Mixtral-8x7B', 'Gemma-IT', 'Code-Llama-Instruct', 'Phi-2', 'Qwen-1.5-Chat',
-    'DBRX-Instruct', 'OLMo-7B', 'Jamba-Instruct', 'Falcon-180B', 'DeepSeek-Coder',
-    'Grok-1', 'Command-R+', 'Mistral-Large', 'Yi-34B', 'Solar-10.7B'
+const TRAFFIC_PRESETS = [
+  {
+    level: '1× MVP',
+    reqs: '10,000 req/day',
+    dbPool: '12%',
+    latency: '38ms',
+    cost: '$64 / mo',
+    status: 'Optimal',
+    warning: null
+  },
+  {
+    level: '10× Growth',
+    reqs: '100,000 req/day',
+    dbPool: '48%',
+    latency: '82ms',
+    cost: '$148 / mo',
+    status: 'Healthy',
+    warning: 'Recommend connection pooling (PgBouncer) for burst concurrency'
+  },
+  {
+    level: '100× Scale',
+    reqs: '1,000,000 req/day',
+    dbPool: '94%',
+    latency: '240ms',
+    cost: '$380 / mo',
+    status: 'Bottleneck Detected',
+    warning: '🚨 Uncached database queries will saturate connections. Redis cache layer required.'
+  }
 ];
 
-const synthModes = [
-  { mode: 'VIDEO', icon: <Video size={16}/>, prompt: 'A cinematic shot of a rainy night in Tokyo.', color: 'rose' },
-  { mode: 'IMAGE', icon: <ImageIcon size={16}/>, prompt: 'A photorealistic image of a futuristic city skyline.', color: 'emerald' },
-  { mode: 'AUDIO', icon: <Mic size={16}/>, prompt: 'Generate a lo-fi hip hop track, 120bpm.', color: 'amber' },
-  { mode: 'APP', icon: <Code2 size={16}/>, prompt: 'Build a simple to-do list application.', color: 'indigo' },
-  { mode: 'CHAT', icon: <MessageSquare size={16}/>, prompt: 'Explain quantum computing in simple terms.', color: 'blue' }
+const PRICING_PACKAGES = [
+  {
+    id: 'scan',
+    name: 'Free Scan',
+    price: '$0',
+    frequency: 'forever',
+    badge: 'Open Source & Dev',
+    highlight: false,
+    description: 'Full automated audit and architectural diagnostic for any public or private repository.',
+    features: [
+      '5-Pillar Production Scorecard (0–100)',
+      'Application Twin topology graph',
+      'What-If scale simulator (up to 100×)',
+      'Secret exposure & CVE vulnerability audit',
+      'FinOps cloud arbitrage breakdown',
+      'Downloadable PDF diagnostic report'
+    ],
+    cta: 'Scan Repo Free',
+    isPrimary: false
+  },
+  {
+    id: 'ready',
+    name: 'Production Ready',
+    price: '$199',
+    frequency: 'per repository',
+    badge: 'Most Popular',
+    highlight: true,
+    description: 'Complete automated remediation code package generated directly into your repository via Pull Request.',
+    features: [
+      'Everything in Free Scan',
+      'Hardened non-root multi-stage Dockerfile',
+      'HTTP /health and /ready probes with SIGTERM handler',
+      'GitHub Actions CI/CD with Azure OIDC auth',
+      'Terraform scale-to-zero ACA infrastructure',
+      'Cryptographically signed SAI Certificate',
+      'Official Markdown README shield badge'
+    ],
+    cta: 'Get Production Ready',
+    isPrimary: true
+  },
+  {
+    id: 'launch',
+    name: 'Production Launch',
+    price: '$999',
+    frequency: 'turnkey rollout',
+    badge: 'White Glove',
+    highlight: false,
+    description: 'End-to-end cloud provisioning, custom domain DNS, Azure Key Vault secrets, and verified live cutover.',
+    features: [
+      'Everything in Production Ready',
+      'Turnkey deployment to Azure Container Apps',
+      'Custom domain DNS + managed SSL certificates',
+      'Azure Key Vault secret integration',
+      'PgBouncer database connection pooling',
+      'Human-in-the-loop production engineer validation',
+      '30-day post-launch SLO uptime guarantee'
+    ],
+    cta: 'Schedule Launch',
+    isPrimary: false
+  },
+  {
+    id: 'agency',
+    name: 'Enterprise / Agency',
+    price: '$2,499',
+    frequency: 'per month',
+    badge: 'Scale Teams',
+    highlight: false,
+    description: 'Empower your dev shop or agency to ship 20+ production-grade AI client applications every month.',
+    features: [
+      'Unlimited repository scans & remediations',
+      'Custom Terraform modules (AWS, GCP, Azure)',
+      'SOC2 & HIPAA infrastructure compliance packs',
+      'Dedicated Slack / Teams support channel',
+      'White-label SAI Production Certificates',
+      'Role-based access & multi-tenant billing'
+    ],
+    cta: 'Contact Enterprise',
+    isPrimary: false
+  }
 ];
 
 const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onSubscribe }) => {
-    const [placeholder, setPlaceholder] = useState('');
-    const [userInput, setUserInput] = useState('');
-    const placeholderText = "What should we build today? (Sai)...";
-    const heroDoodlesRef = useRef<HTMLDivElement>(null);
-    const formDoodlesRef = useRef<HTMLDivElement>(null);
+  const [repoInput, setRepoInput] = useState('');
+  const [comparisonTab, setComparisonTab] = useState<'before' | 'after'>('after');
+  const [activeScaleIndex, setActiveScaleIndex] = useState(0);
+  const [copiedBadge, setCopiedBadge] = useState(false);
 
-    const [isDocModalOpen, setIsDocModalOpen] = useState(false);
-    const [selectedDoc, setSelectedDoc] = useState<any>(null);
-    const [showLlmList, setShowLlmList] = useState(false);
-    const [currentSynthIndex, setCurrentSynthIndex] = useState(0);
+  const sampleRepos = [
+    'https://github.com/anomalyco/ai-saas-starter',
+    'https://github.com/example/cursor-generated-crm',
+    'https://github.com/v0/lovable-task-manager'
+  ];
 
-    const handleOpenDocModal = (docData: any) => {
-        setSelectedDoc(docData);
-        setIsDocModalOpen(true);
-    };
+  const handleSelectSample = (sample: string) => {
+    setRepoInput(sample);
+  };
 
-    const handleBlockedAction = (e?: React.FormEvent) => {
-        if (e) e.preventDefault();
-        alert("Under Development");
-    };
-
-    useEffect(() => {
-        const root = document.getElementById('root');
-        if (root) {
-            root.style.overflowY = 'auto';
-            root.classList.add('custom-scrollbar');
-        }
-
-        const handleScroll = () => {
-            if (!root) return;
-            const scrollTop = root.scrollTop;
-
-            if (heroDoodlesRef.current) {
-                heroDoodlesRef.current.style.transform = `translate(-50%, -50%) translateY(${scrollTop * 0.2}px) rotate(${scrollTop * 0.05}deg)`;
-            }
-
-            if (formDoodlesRef.current) {
-                formDoodlesRef.current.style.transform = `translate(-50%, 80px) translateY(${scrollTop * 0.4}px)`;
-            }
-        };
-
-        if (root) {
-            root.addEventListener('scroll', handleScroll, { passive: true });
-        }
-
-        return () => {
-            if (root) {
-                root.style.overflowY = 'hidden';
-                root.classList.remove('custom-scrollbar');
-                root.removeEventListener('scroll', handleScroll);
-            }
-        };
-    }, []);
-
-    useEffect(() => {
-        let timeout: ReturnType<typeof setTimeout>;
-        if (placeholder.length < placeholderText.length) {
-            timeout = setTimeout(() => {
-                setPlaceholder(placeholderText.substring(0, placeholder.length + 1));
-            }, 100);
-        }
-        return () => clearTimeout(timeout);
-    }, [placeholder]);
-
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (isDocModalOpen) return;
-            const target = e.target as HTMLElement;
-            if (['INPUT', 'TEXTAREA'].includes(target.tagName)) return;
-            if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
-                e.preventDefault();
-                setUserInput(e.key);
-                setTimeout(() => { onLaunch(); setUserInput(''); }, 200);
-            }
-        };
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [onLaunch, isDocModalOpen]);
-
-    useEffect(() => {
-        const interval = setInterval(() => {
-          setCurrentSynthIndex(prev => (prev + 1) % synthModes.length);
-        }, 3000);
-        return () => clearInterval(interval);
-    }, []);
-
-    const activeSynth = synthModes[currentSynthIndex];
+  const handleCopyBadge = () => {
+    const badgeMarkdown = `[![SAI Production-Grade](https://img.shields.io/badge/SAI-Production%20Grade%2093%2F100-success?style=flat-square)](https://sai.dev/verify/cert_prod_9f82a1e3)`;
+    navigator.clipboard.writeText(badgeMarkdown);
+    setCopiedBadge(true);
+    setTimeout(() => setCopiedBadge(false), 2500);
+  };
 
   return (
-    <div className="w-full bg-white text-slate-900 font-sans antialiased relative">
-        <style>{`
-            @keyframes scribble {
-                from { stroke-dashoffset: 400; }
-                to { stroke-dashoffset: 0; }
-            }
-            .animate-scribble {
-                stroke-dasharray: 400;
-                animation: scribble 3s ease-out forwards;
-            }
-            @keyframes doodle-float {
-                0%, 100% { transform: translateY(0) rotate(0deg); }
-                33% { transform: translateY(-10px) rotate(-2deg); }
-                66% { transform: translateY(5px) rotate(2deg); }
-            }
-            .animate-doodle-float {
-                animation: doodle-float 6s ease-in-out infinite;
-            }
-            @keyframes slow-rotate {
-                from { transform: rotate(0deg); }
-                to { transform: rotate(360deg); }
-            }
-            .animate-slow-rotate {
-                animation: slow-rotate 60s linear infinite;
-            }
-            .font-doodle { font-family: 'Gochi Hand', cursive; }
-            @keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-            .animate-fade-in { animation: fade-in 0.6s ease-out forwards; }
-            @keyframes scroll-up {
-                from { transform: translateY(0); }
-                to { transform: translateY(-50%); }
-            }
-            .animate-scroll-up {
-                animation: scroll-up 40s linear infinite;
-            }
-        `}</style>
-
-        {/* Hero Section */}
-        <div 
-            id="the-blueprint-hero"
-            className="h-screen min-h-[700px] w-full flex flex-col justify-center items-center p-8 overflow-hidden relative bg-[#1e293b] text-white"
-            style={{
-                backgroundImage: 
-                'linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px)',
-                backgroundSize: '20px 20px'
-            }}
+    <div className="w-full bg-[#0a0d14] text-slate-100 font-sans antialiased selection:bg-cyan-500 selection:text-black">
+      {/* Top Banner */}
+      <div className="bg-gradient-to-r from-cyan-950 via-slate-900 to-blue-950 border-b border-cyan-500/20 px-4 py-2.5 text-center text-xs font-mono flex items-center justify-center gap-3">
+        <span className="flex h-2 w-2 relative">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
+        </span>
+        <span className="text-slate-300">
+          <strong className="text-cyan-400 font-semibold">SAI Production Engineer v2.4</strong> is online. Azure Container Apps (ACA) target available.
+        </span>
+        <button 
+          onClick={onLaunch}
+          className="text-cyan-300 hover:text-cyan-200 underline flex items-center gap-1 font-semibold ml-2"
         >
-            {/* Background Doodles Layer - ENSURE Z-0 */}
-            <div 
-                ref={heroDoodlesRef}
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] pointer-events-none z-0">
-                <div className="absolute inset-0 border-2 border-dashed border-white/10 rounded-full animate-slow-rotate"></div>
-                <div className="absolute inset-12 border border-dashed border-white/5 rounded-full animate-slow-rotate" style={{ animationDirection: 'reverse' }}></div>
-                <div className="absolute top-1/2 left-1/2 w-px h-full bg-gradient-to-b from-transparent via-white/10 to-transparent -translate-y-1/2"></div>
-                <div className="absolute top-1/2 left-1/2 h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-1/2"></div>
-                
-                {/* Floating Particle Doodles */}
-                <svg className="absolute top-20 left-40 w-12 h-12 text-cyan-400/20 animate-doodle-float" viewBox="0 0 100 100">
-                    <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="4 4"/>
-                </svg>
-                <svg className="absolute bottom-20 right-40 w-16 h-16 text-purple-400/20 animate-doodle-float" style={{ animationDelay: '1s' }} viewBox="0 0 100 100">
-                    <rect x="20" y="20" width="60" height="60" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="4 4" transform="rotate(15 50 50)"/>
-                </svg>
-            </div>
-        
-            <div className="relative z-10 max-w-5xl mx-auto w-full text-center flex flex-col items-center animate-fade-in">
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-950/60 border border-cyan-500/30 mb-8 backdrop-blur-sm shadow-lg animate-fade-in" style={{ animationDelay: '200ms' }}>
-                    <span className="font-mono text-xs text-cyan-300 font-semibold tracking-wider">SAI — AI PRODUCTION ENGINEERING</span>
-                </div>
-
-                <h1 className="relative text-5xl md:text-7xl font-black text-white tracking-tight mb-4 font-sans leading-none animate-fade-in" style={{ animationDelay: '400ms' }}>
-                    Your code works. <br className="hidden md:block"/>
-                    <span className="relative inline-block text-cyan-400 mt-2">
-                        Now make it production-ready.
-                        <svg className="absolute -bottom-3 left-0 w-full h-4 text-cyan-400" viewBox="0 0 100 10" preserveAspectRatio="none">
-                            <path d="M0,5 Q25,10 50,5 T100,5" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" className="animate-scribble"/>
-                        </svg>
-                    </span>
-                </h1>
-                <p className="text-gray-300 text-lg md:text-xl max-w-2xl font-normal mt-6 leading-relaxed animate-fade-in" style={{ animationDelay: '600ms' }}>
-                    AI can build your application. SAI makes it production-grade. Discover risks, fix infrastructure, simulate multi-cloud costs, and deploy anywhere.
-                </p>
-
-                <div className="relative group w-full max-w-2xl mt-10 animate-fade-in" style={{ animationDelay: '800ms' }}>
-                    {/* Main Input */}
-                    <div className="relative flex items-center bg-slate-900/90 border border-slate-700 rounded-full p-2 shadow-2xl shadow-cyan-950/50 z-20 transition-all hover:border-cyan-500">
-                        <div className="pl-4 pr-3 text-cyan-400">
-                            <Rocket size={22} strokeWidth={2.5} />
-                        </div>
-                        <input
-                            type="text"
-                            value={userInput}
-                            onChange={(e) => setUserInput(e.target.value)}
-                            placeholder="github.com/org/repo (or click Analyze to test sample)"
-                            className="flex-1 bg-transparent border-none text-base font-mono text-white placeholder-slate-500 focus:outline-none"
-                        />
-                        <button 
-                            type="button" 
-                            onClick={onLaunch}
-                            className="px-6 py-3.5 bg-gradient-to-r from-cyan-400 to-blue-500 text-black font-bold text-xs uppercase tracking-wider rounded-full hover:from-cyan-300 hover:to-blue-400 transition-all active:scale-95 shadow-lg shadow-cyan-500/20 flex items-center gap-2"
-                        >
-                            <span>Analyze a Repository</span>
-                            <ArrowRight size={16} strokeWidth={3} />
-                        </button>
-                    </div>
-
-                    {/* Supported Ecosystem Badges */}
-                    <div className="mt-5 text-center">
-                        <span className="text-[11px] font-mono uppercase text-slate-500 tracking-wider">
-                            Turn AI-generated code into production software from:
-                        </span>
-                        <div className="flex flex-wrap items-center justify-center gap-2 mt-2 text-xs font-mono text-slate-400">
-                            {['Lovable', 'Cursor', 'Claude Code', 'v0', 'Replit', 'Google AI Studio', 'Bolt', 'GitHub'].map(tool => (
-                                <span key={tool} className="px-2.5 py-1 rounded-md bg-white/5 border border-white/10 text-slate-300">
-                                    {tool}
-                                </span>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Cards Container - Ensure z-20 to be strictly on top of doodles */}
-                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mt-32 w-full animate-fade-in relative z-20" style={{ animationDelay: '1000ms' }}>
-                    {BLUEPRINTS.map((bp) => (
-                        <button 
-                            key={bp.id} 
-                            onClick={() => handleBlockedAction()}
-                            className={`text-left bg-black/30 border border-white/10 p-6 rounded-3xl group hover:-translate-y-1 transition-all backdrop-blur-lg hover:bg-black/40 shadow-2xl shadow-black/60 relative z-20 overflow-hidden`}
-                        >
-                            {/* Card Background Doodle Overlay */}
-                            <svg className="absolute -bottom-8 -right-8 w-24 h-24 text-white/5 opacity-0 group-hover:opacity-100 transition-opacity animate-slow-rotate" viewBox="0 0 100 100">
-                                <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="4 4"/>
-                            </svg>
-                            
-                            <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-5 transition-transform group-hover:scale-110">
-                                {bp.icon}
-                            </div>
-                            <h3 className="font-bold text-white mb-1 font-doodle text-xl">{bp.title}</h3>
-                            <p className="text-xs text-gray-400 font-medium leading-relaxed">{bp.description}</p>
-                        </button>
-                    ))}
-                </div>
-            </div>
-        </div>
-
-        {/* The Blueprint Section */}
-        <section id="the-blueprint" className="py-24 px-8 max-w-5xl mx-auto text-center relative overflow-hidden">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] pointer-events-none opacity-[0.08]">
-                <svg width="800" height="800" viewBox="0 0 800 800" className="text-slate-900 animate-slow-rotate">
-                    <circle cx="400" cy="400" r="350" stroke="currentColor" strokeWidth="1" fill="none" strokeDasharray="8 8" />
-                    <circle cx="400" cy="400" r="250" stroke="currentColor" strokeWidth="1" fill="none" />
-                    <path d="M400,50 L400,750 M50,400 L750,400" stroke="currentColor" strokeWidth="0.5" fill="none" strokeDasharray="4 4" />
-                    <path d="M143,143 L657,657 M143,657 L657,143" stroke="currentColor" strokeWidth="0.5" fill="none" strokeDasharray="4 4" />
-                    <rect x="200" y="200" width="400" height="400" stroke="currentColor" strokeWidth="1" fill="none" transform="rotate(45 400 400)" />
-                </svg>
-            </div>
-            <div className="relative z-10">
-                <Layers size={32} className="mx-auto text-blue-600 mb-4 animate-pulse"/>
-                <h2 className="text-5xl md:text-6xl font-black text-slate-900 tracking-tighter mb-4 font-doodle relative">
-                    <div className="absolute top-0 -left-8 text-blue-300/50 animate-doodle-float">
-                        <svg width="40" height="40" viewBox="0 0 100 100"><path d="M50 10 L55 45 L90 50 L55 55 L50 90 L45 55 L10 50 L45 45 Z" fill="currentColor"/></svg>
-                    </div>
-                    The Sai Fabric
-                    <svg className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-64 h-6 text-blue-200" viewBox="0 0 100 10" preserveAspectRatio="none">
-                        <path d="M0,5 Q25,0 50,5 T100,5" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" className="animate-scribble" />
-                    </svg>
-                </h2>
-                <p className="text-slate-600 text-lg max-w-xl mx-auto font-medium mt-10 leading-relaxed">A unified fabric for modern AI-native development.</p>
-                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mt-16 text-left">
-                    <FeatureCard 
-                        icon={<MessageSquare size={24} className="text-blue-600"/>} 
-                        title="Multimodal Core" 
-                        description="Chat, generate images, video, and audio with a suite of GenAI models."
-                        doodleIcon={<MessageSquare size={80} strokeWidth={1} className="-rotate-12 animate-doodle-float"/>}
-                    />
-                    <FeatureCard 
-                        icon={<Rocket size={24} className="text-purple-600"/>} 
-                        title="Cloud Orchestration" 
-                        description="Synthesize and deploy infrastructure across AWS, GCP, and Azure."
-                        doodleIcon={<Rocket size={80} strokeWidth={1} className="rotate-12 animate-doodle-float" style={{ animationDelay: '0.5s' }}/>}
-                    />
-                    <FeatureCard 
-                        icon={<ShieldCheck size={24} className="text-emerald-600"/>} 
-                        title="Sentinel Security" 
-                        description="Enforce governance with real-time policy checks and vulnerability scanning."
-                        doodleIcon={<ShieldCheck size={80} strokeWidth={1} className="-rotate-6 animate-doodle-float" style={{ animationDelay: '1s' }}/>}
-                    />
-                    <FeatureCard 
-                        icon={<Users size={24} className="text-rose-600"/>} 
-                        title="Live Collaboration" 
-                        description="Code, chat, and share your screen with your team in real time."
-                        doodleIcon={<Users size={80} strokeWidth={1} className="rotate-6 animate-doodle-float" style={{ animationDelay: '1.5s' }}/>}
-                    />
-                </div>
-            </div>
-        </section>
-
-        <section id="model-library" className="py-24 px-8 bg-slate-900 text-center w-full relative overflow-hidden">
-            <div className="absolute inset-0 bg-slate-900" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 0)', backgroundSize: '24px 24px' }}></div>
-            <div className="absolute -top-32 -left-32 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl animate-pulse"></div>
-            <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse" style={{animationDelay: '3s'}}></div>
-
-            <div className="max-w-5xl mx-auto relative">
-                <Cpu size={32} className="mx-auto text-cyan-400 mb-4 animate-slow-rotate"/>
-                <h2 className="text-5xl md:text-6xl font-black text-white tracking-tighter mb-4 font-doodle relative">
-                    AI Model Hub
-                    <svg className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-64 h-6 text-cyan-400/50" viewBox="0 0 100 10" preserveAspectRatio="none">
-                        <path d="M0,5 Q25,0 50,5 T100,5" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" className="animate-scribble" />
-                    </svg>
-                </h2>
-                <p className="text-gray-400 text-lg max-w-xl mx-auto font-medium mt-10 leading-relaxed">50+ AI models from leading providers, ready to use.</p>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 mt-16 text-left">
-                    <ModelProviderCard name="Meta" doodleIcon={<BrainCircuit size={120} strokeWidth={0.5} className="-rotate-6 animate-doodle-float"/>} />
-                    <ModelProviderCard name="Google" doodleIcon={<Cpu size={120} strokeWidth={0.5} className="-rotate-12 animate-doodle-float" style={{ animationDelay: '0.3s' }}/>} />
-                    <ModelProviderCard name="Anthropic" doodleIcon={<BrainCircuit size={120} strokeWidth={0.5} className="rotate-6 animate-doodle-float" style={{ animationDelay: '0.6s' }}/>} />
-                    <ModelProviderCard name="OpenAI" doodleIcon={<Cpu size={120} strokeWidth={0.5} className="rotate-12 animate-doodle-float" style={{ animationDelay: '0.9s' }}/>} />
-                    <div className="h-[270px]">
-                        {showLlmList ? (
-                            <div className="relative w-full h-full bg-slate-800/50 border-2 border-dashed border-cyan-400/50 rounded-2xl flex flex-col p-6 transition-all overflow-hidden animate-fade-in">
-                                <button onClick={() => setShowLlmList(false)} className="absolute top-3 right-3 text-gray-500 hover:text-white z-20 p-1 hover:bg-white/10 rounded-full">
-                                    <X size={16} />
-                                </button>
-                                <h3 className="font-bold text-white text-center text-base mb-4">Connecting Endpoints...</h3>
-                                <div className="relative flex-1 overflow-hidden">
-                                    <div className="absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-slate-800/50 to-transparent z-10"></div>
-                                    <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-slate-800/50 to-transparent z-10"></div>
-                                    <div className="absolute inset-0 animate-scroll-up">
-                                        <div className="space-y-2">
-                                            {[...MOCK_LLMS, ...MOCK_LLMS].map((llm, i) => (
-                                                <div key={i} className="flex items-center gap-3 p-2 bg-black/20 rounded-lg animate-fade-in" style={{ animationDelay: `${i * 50}ms`}}>
-                                                    <Cpu size={14} className="text-gray-600" />
-                                                    <span className="text-xs font-mono text-gray-400">{llm}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        ) : (
-                            <button onClick={() => setShowLlmList(true)} className="w-full h-full bg-transparent border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center p-6 group hover:border-cyan-400/50 hover:bg-cyan-500/5 transition-all hover:-translate-y-2">
-                                <div className="w-16 h-16 rounded-full border-2 border-dashed border-white/20 group-hover:border-cyan-400/80 flex items-center justify-center mb-4 transition-colors group-hover:scale-110">
-                                    <Plus size={32} className="text-white/30 group-hover:text-cyan-400 transition-colors"/>
-                                </div>
-                                <h3 className="font-bold text-white text-lg">Bring Your Own</h3>
-                                <p className="text-xs text-gray-500">Connect a custom LLM endpoint.</p>
-                            </button>
-                        )}
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="universal-synthesizer" className="py-24 px-8 bg-slate-50">
-            <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-16 items-center">
-                <div className="text-center md:text-left">
-                    <h2 className="text-5xl md:text-6xl font-black text-slate-900 tracking-tighter mb-4 font-doodle relative">Universal Synthesizer</h2>
-                    <p className="text-slate-600 text-lg max-w-md mx-auto md:mx-0 font-medium mt-10 leading-relaxed">
-                        Go beyond code completion. Our Sai co-pilot is a multimodal engine that can chat, design visuals, compose audio, and synthesize entire applications from a single prompt.
-                    </p>
-                </div>
-                <div className="bg-slate-800/90 border border-slate-700/50 rounded-2xl shadow-2xl p-4 backdrop-blur-lg ring-1 ring-black/5">
-                    <div className="bg-black/50 rounded-lg p-4 font-mono text-xs text-slate-300 border border-slate-700/50">
-                        <pre><code><span className="text-green-400">&gt;</span> sai install @multimodal/core<br/><span className="text-gray-500">... synthesis engine loaded</span></code></pre>
-                    </div>
-                    <div key={currentSynthIndex} className={`mt-4 bg-slate-900/70 border border-slate-700/50 rounded-lg p-4 animate-fade-in`}>
-                        <div className={`flex justify-between items-center border-b border-${activeSynth.color}-500/30 pb-2`}>
-                            <div className={`flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-${activeSynth.color}-400`}>
-                                {activeSynth.icon}
-                                {activeSynth.mode}
-                            </div>
-                            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                        </div>
-                        <p className="text-sm text-slate-300 mt-3 h-10">{activeSynth.prompt}</p>
-                        <div className="mt-8 flex flex-col items-center gap-2 text-center">
-                            <div className={`w-8 h-8 border-2 border-${activeSynth.color}-400 border-t-transparent rounded-full animate-spin`}></div>
-                            <span className={`text-xs font-bold text-${activeSynth.color}-400/80 uppercase tracking-widest`}>Synthesizing...</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-        
-        <div className="bg-white text-slate-900 w-full">
-            <section id="documentation" className="py-24 px-8 max-w-5xl mx-auto text-center relative overflow-hidden">
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] pointer-events-none opacity-[0.08]">
-                    <svg width="800" height="800" viewBox="0 0 800 800" className="text-slate-900 animate-slow-rotate" style={{ animationDirection: 'reverse' }}>
-                        <path d="M400,400 C 200,200 600,200 400,400 C 200,600 600,600 400,400" stroke="currentColor" strokeWidth="0.5" fill="none" opacity="0.5" />
-                        <path d="M400,400 Q 250,250 100,200" stroke="currentColor" strokeWidth="1" fill="none" strokeDasharray="4 4" className="animate-scribble" />
-                        <path d="M400,400 Q 550,250 700,200" stroke="currentColor" strokeWidth="1" fill="none" strokeDasharray="4 4" className="animate-scribble" />
-                        <path d="M400,400 Q 250,550 100,600" stroke="currentColor" strokeWidth="1" fill="none" strokeDasharray="4 4" className="animate-scribble" />
-                        <path d="M400,400 Q 550,550 700,600" stroke="currentColor" strokeWidth="1" fill="none" strokeDasharray="4 4" className="animate-scribble" />
-                    </svg>
-                </div>
-                <div className="relative z-10">
-                    <BookOpen size={32} className="mx-auto text-blue-600 mb-4 animate-bounce"/>
-                    <h2 className="text-5xl md:text-6xl font-black text-slate-900 tracking-tighter mb-4 font-doodle relative">
-                        <svg className="absolute top-0 -right-24 w-32 h-16 text-slate-300/80 animate-doodle-float z-0" style={{ animationDuration: '15s' }} viewBox="0 0 200 100">
-                            <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="4" fill="none"/>
-                            <circle cx="150" cy="50" r="40" stroke="currentColor" strokeWidth="4" fill="none"/>
-                            <path d="M90 50 H 110" stroke="currentColor" strokeWidth="4"/>
-                        </svg>
-                        The Sai Manual
-                        <svg className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-64 h-6 text-blue-200" viewBox="0 0 100 10" preserveAspectRatio="none">
-                            <path d="M0,5 Q25,0 50,5 T100,5" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" className="animate-scribble" />
-                        </svg>
-                    </h2>
-                    <p className="text-slate-600 text-lg max-w-xl mx-auto font-medium mt-10 leading-relaxed">Your guide to synthesizing at the speed of thought.</p>
-                     <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mt-16 text-left relative z-20">
-                        <DocCard
-                            icon={<Terminal className="text-blue-600" />}
-                            title="Universal Terminal"
-                            description="A fully-featured shell environment right in your browser."
-                            doodleIcon={<Terminal size={80} strokeWidth={1} className="-rotate-12 animate-doodle-float" />}
-                            onClick={() => handleOpenDocModal(DOC_CONTENT["Universal Terminal"])}
-                        />
-                        <DocCard
-                            icon={<Workflow className="text-rose-600" />}
-                            title="API Studio"
-                            description="A comprehensive toolkit for designing, testing, and generating APIs."
-                            doodleIcon={<Workflow size={80} strokeWidth={1} className="-rotate-12 animate-doodle-float" style={{ animationDelay: '0.2s' }}/>}
-                            onClick={() => handleOpenDocModal(DOC_CONTENT["API Studio"])}
-                        />
-                        <DocCard
-                            icon={<Container className="text-cyan-600" />}
-                            title="Container Studio"
-                            description="Synthesize, manage, and optimize Docker images and containers."
-                            doodleIcon={<Container size={80} strokeWidth={1} className="rotate-12 animate-doodle-float" style={{ animationDelay: '0.4s' }}/>}
-                            onClick={() => handleOpenDocModal(DOC_CONTENT["Container Studio"])}
-                        />
-                         <DocCard
-                            icon={<LayoutGrid className="text-purple-600" />}
-                            title="UX Studio"
-                            description="Prototype components, map user flows, and manage design systems with AI."
-                            doodleIcon={<LayoutGrid size={80} strokeWidth={1} className="rotate-6 animate-doodle-float" style={{ animationDelay: '0.6s' }}/>}
-                            onClick={() => handleOpenDocModal(DOC_CONTENT["UX Studio"])}
-                        />
-                         <DocCard
-                            icon={<ShieldCheck className="text-emerald-600" />}
-                            title="Governance"
-                            description="Define and enforce security policies for your infrastructure and code."
-                            doodleIcon={<ShieldCheck size={80} strokeWidth={1} className="-rotate-6 animate-doodle-float" style={{ animationDelay: '0.8s' }}/>}
-                            onClick={() => handleOpenDocModal(DOC_CONTENT["Governance"])}
-                        />
-                    </div>
-                </div>
-            </section>
-        </div>
-
-        <section id="community" className="py-32 px-8 bg-slate-50 text-slate-900 w-full relative overflow-hidden">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1200px] h-[1200px] pointer-events-none opacity-50">
-                <svg width="100%" height="100%" viewBox="0 0 1200 1200" className="text-slate-200/80 animate-slow-rotate">
-                    <path d="M600,0 C 300,300 300,900 600,1200" stroke="currentColor" strokeWidth="1" fill="none" strokeDasharray="4 4" />
-                    <path d="M0,600 C 300,300 900,300 1200,600" stroke="currentColor" strokeWidth="1" fill="none" strokeDasharray="4 4" />
-                    <path d="M600,0 C 900,300 900,900 600,1200" stroke="currentColor" strokeWidth="1" fill="none" strokeDasharray="4 4" />
-                    <path d="M0,600 C 300,900 900,900 1200,600" stroke="currentColor" strokeWidth="1" fill="none" strokeDasharray="4 4" />
-                </svg>
-            </div>
-            <div className="max-w-6xl mx-auto relative">
-                <div className="text-center mb-24">
-                    <Users size={32} className="mx-auto text-blue-600 mb-4 animate-pulse"/>
-                    <h2 className="text-5xl md:text-6xl font-black text-slate-900 tracking-tighter mb-4 font-doodle relative">
-                        Community Hub
-                        <svg className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-64 h-6 text-blue-200" viewBox="0 0 100 10" preserveAspectRatio="none">
-                            <path d="M0,5 Q25,0 50,5 T100,5" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" className="animate-scribble" />
-                        </svg>
-                    </h2>
-                    <p className="text-slate-600 text-lg max-w-xl mx-auto font-medium mt-10 leading-relaxed">Collaborate in real-time, anywhere in Sai.</p>
-                </div>
-                
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start relative z-20">
-                    <div className="space-y-12">
-                        {/* Activity Pulse */}
-                        <div className="bg-yellow-50 border-4 border-slate-900 sketch-border p-8 relative rotate-[-2deg] shadow-lg transition-transform hover:rotate-0 duration-500">
-                            <div className="absolute -top-4 -left-4 bg-red-500 text-white font-black doodle-text px-4 py-1.5 rounded text-lg rotate-[-10deg] shadow-md animate-pulse">LIVE!</div>
-                            <h3 className="text-2xl font-black doodle-text text-slate-800 mb-6">Activity Pulse</h3>
-                            <div className="space-y-6">
-                                {activityFeed.map((item, i) => (
-                                    <div key={i} className="flex items-start gap-3 animate-fade-in" style={{ animationDelay: `${i*100}ms` }}>
-                                        <div className="p-2 bg-white rounded-full border-2 border-slate-200">{item.icon}</div>
-                                        <div>
-                                            <p className="text-sm font-bold text-slate-700 leading-tight">{item.user} {item.action}</p>
-                                            <p className="text-xs text-slate-400 font-bold">{item.time}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Community Discussions */}
-                         <div className="bg-blue-50 border-4 border-slate-900 sketch-border p-8 relative rotate-[1deg] shadow-lg transition-transform hover:rotate-0 duration-500">
-                            <h3 className="text-2xl font-black doodle-text text-slate-800 mb-6 flex items-center gap-2"><MessageSquare size={24} /> Community Discussions</h3>
-                            <div className="space-y-4">
-                                {INITIAL_DISCUSSIONS.map((item, i) => (
-                                    <div key={i} className="flex items-start gap-3 p-3 bg-white rounded-lg border-2 border-slate-200 hover:border-slate-300 transition-all cursor-pointer hover:scale-[1.02]">
-                                        <div className="p-2">{item.icon}</div>
-                                        <div>
-                                            <p className="text-sm font-bold text-slate-700 leading-tight">{item.title}</p>
-                                            <p className="text-xs text-gray-400 font-bold">by @{item.user} &bull; {item.time}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div className="space-y-12">
-                        {/* Session Agenda */}
-                        <div className="bg-green-50 border-4 border-slate-900 sketch-border p-8 relative rotate-[2deg] shadow-lg transition-transform hover:rotate-0 duration-500">
-                            <h3 className="text-2xl font-black doodle-text text-slate-800 mb-6 flex items-center gap-2"><ListChecks size={24} /> Live Session Agenda</h3>
-                            <div className="space-y-3">
-                                {INITIAL_AGENDA_ITEMS.map((item) => (
-                                    <div key={item.id} className="flex items-center gap-3 p-3 bg-white rounded-lg border-2 border-slate-200">
-                                        {item.completed ? <CheckSquare size={16} className="text-green-500" /> : <div className="w-4 h-4 border-2 border-slate-400 rounded-sm flex-shrink-0"></div>}
-                                        <p className={`text-sm font-bold ${item.completed ? 'text-slate-400 line-through' : 'text-slate-700'}`}>{item.text}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Live Participants & CTAs */}
-                        <div className="space-y-8 rotate-[-1deg]">
-                            <div className="bg-white border-4 border-slate-900 sketch-border p-8 relative shadow-lg">
-                                <h3 className="text-2xl font-black doodle-text text-slate-800 mb-4">Live Participants</h3>
-                                <div className="flex items-center gap-3">
-                                    <div className="flex -space-x-4">
-                                        {MOCK_TEAM_MEMBERS.map((member) => (
-                                            <div key={member.id} className="w-12 h-12 rounded-full bg-slate-700 flex items-center justify-center text-lg font-bold border-4 border-white text-white overflow-hidden shadow-md hover:scale-110 hover:z-10 transition-transform" title={member.name}>
-                                                {member.avatarUrl ? <img src={member.avatarUrl} alt={member.name} className="w-full h-full object-cover" /> : member.initials}
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <div className="w-12 h-12 rounded-full bg-slate-100 border-4 border-dashed border-slate-300 flex items-center justify-center cursor-pointer hover:bg-slate-200 transition-colors">
-                                        <Plus size={20} className="text-slate-400" />
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="space-y-4 px-4">
-                                <button className="w-full bg-slate-800 text-white border-4 border-slate-900 sketch-border sketch-shadow px-6 py-4 font-black text-sm uppercase tracking-widest hover:-translate-y-1 transition-all active:scale-95">Join Discord</button>
-                                <button className="w-full bg-white text-slate-900 border-4 border-slate-900 sketch-border sketch-shadow px-6 py-4 font-black text-sm uppercase tracking-widest hover:-translate-y-1 transition-all active:scale-95">GitHub Discussions</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="pricing" className="py-24 px-8 bg-[#0b0e14] text-white relative overflow-hidden">
-            {/* Background effects */}
-            <div className="max-w-6xl mx-auto relative z-10">
-                <div className="text-center mb-16">
-                    <CreditCard size={32} className="mx-auto text-emerald-400 mb-4 animate-bounce" />
-                    <h2 className="text-5xl md:text-6xl font-black tracking-tighter mb-4 font-doodle">
-                        Neural <span className="text-emerald-400">Pricing</span>
-                    </h2>
-                    <p className="text-gray-400 text-lg max-w-xl mx-auto font-medium leading-relaxed">
-                        Flexible tokens. Scale as you synthesize.
-                    </p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    {PLANS.map((plan) => (
-                        <div key={plan.id} className={`relative p-8 rounded-3xl border transition-all duration-300 hover:-translate-y-2 ${
-                            plan.id === 'pro' 
-                            ? 'bg-slate-800/80 border-emerald-500 shadow-[0_0_40px_rgba(16,185,129,0.15)] ring-1 ring-emerald-500/50' 
-                            : 'bg-slate-900/50 border-white/10 hover:bg-slate-800/50'
-                        }`}>
-                            {plan.id === 'pro' && (
-                                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-emerald-500 text-black text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-lg">
-                                    Recommended
-                                </div>
-                            )}
-                            <h3 className="text-xl font-black text-white uppercase tracking-widest mb-2">{plan.name}</h3>
-                            <div className="flex items-baseline gap-1 mb-4">
-                                <span className="text-4xl font-black text-white">${plan.priceUSD}</span>
-                                <span className="text-sm text-gray-500 font-bold uppercase">/mo</span>
-                            </div>
-                            {plan.priceUSD > 0 && (
-                                <button 
-                                    onClick={onSubscribe}
-                                    className="w-full mb-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest bg-gradient-to-r from-emerald-500 to-cyan-500 text-black hover:from-emerald-400 hover:to-cyan-400 shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center gap-2"
-                                >
-                                    <CreditCard size={14} />
-                                    Pay Now
-                                </button>
-                            )}
-                            <div className="mb-8 p-3 rounded-xl bg-white/5 border border-white/5">
-                                <div className="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">Quota</div>
-                                <div className="text-2xl font-black text-emerald-400">{plan.tokens} <span className="text-sm text-white">Tokens</span></div>
-                            </div>
-                            <ul className="space-y-4 mb-8">
-                                {plan.features.map((feature, i) => (
-                                    <li key={i} className="flex items-start gap-3 text-sm text-gray-300">
-                                        <Check size={16} className="text-emerald-500 shrink-0 mt-0.5" />
-                                        <span className="leading-tight">{feature}</span>
-                                    </li>
-                                ))}
-                            </ul>
-                            <button 
-                                onClick={onSubscribe}
-                                className={`w-full py-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
-                                    plan.id === 'pro'
-                                    ? 'bg-emerald-500 text-black hover:bg-emerald-400 shadow-lg shadow-emerald-500/20'
-                                    : 'bg-white/10 text-white hover:bg-white/20'
-                                }`}
-                            >
-                                {plan.id === 'hobby' ? 'Start Free' : 'Subscribe'}
-                            </button>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        </section>
-
-        <Footer />
-        <DocDetailModal 
-            isOpen={isDocModalOpen}
-            onClose={() => setIsDocModalOpen(false)}
-            doc={selectedDoc}
-        />
-    </div>
-  );
-};
-
-const FeatureCard: React.FC<{icon: React.ReactNode, title: string, description: string, doodleIcon: React.ReactNode}> = ({icon, title, description, doodleIcon}) => (
-    <div className="bg-slate-50/50 border border-slate-200 p-6 rounded-2xl shadow-lg shadow-slate-200/50 hover:bg-white hover:-translate-y-2 transition-all relative overflow-hidden group">
-        <div className="absolute -right-5 -bottom-5 text-slate-100/80 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-[-6deg] z-0">
-            {doodleIcon}
-        </div>
-        <div className="relative z-10">
-            <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center mb-4 border border-slate-200/80 shadow-sm transition-transform group-hover:scale-110">
-                {icon}
-            </div>
-            <h3 className="font-bold text-slate-800 mb-2">{title}</h3>
-            <p className="text-sm text-slate-500">{description}</p>
-        </div>
-    </div>
-);
-
-const DocCard: React.FC<{icon: React.ReactNode, title: string, description: string, doodleIcon: React.ReactNode, onClick: () => void}> = ({icon, title, description, doodleIcon, onClick}) => (
-    <button onClick={onClick} className="text-left block bg-slate-50/50 border border-slate-200 p-6 rounded-2xl shadow-lg shadow-slate-200/50 hover:bg-white hover:-translate-y-2 transition-all relative overflow-hidden group">
-        <div className="absolute -right-8 -bottom-8 text-slate-100/80 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-[-6deg] z-0">
-            {doodleIcon}
-        </div>
-        <div className="relative z-10">
-            <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center mb-4 border border-slate-200/80 shadow-sm transition-transform group-hover:scale-110">
-                {icon}
-            </div>
-            <h3 className="font-bold text-slate-800 text-lg mb-2">{title}</h3>
-            <p className="text-sm text-gray-500 mb-4">{description}</p>
-            <span className="text-sm font-bold text-blue-600 group-hover:underline">Read more &rarr;</span>
-        </div>
-    </button>
-);
-
-const DocDetailModal: React.FC<{ isOpen: boolean, onClose: () => void, doc: any }> = ({ isOpen, onClose, doc }) => {
-  if (!isOpen || !doc) return null;
-
-  return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
-      <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl" onClick={e => e.stopPropagation()}>
-        <div className="p-6 border-b border-slate-200 flex justify-between items-center">
-          <h2 className="text-xl font-bold text-slate-800">{doc.title}</h2>
-          <button onClick={onClose} className="p-2 text-slate-400 hover:bg-slate-100 rounded-full"><X size={20} /></button>
-        </div>
-        <div className="p-6 overflow-y-auto custom-scrollbar">
-          {doc.content}
-        </div>
-        <div className="p-4 border-t border-slate-200 bg-slate-50 flex justify-end">
-            <button onClick={onClose} className="px-5 py-2 bg-blue-600 text-white rounded-lg font-semibold text-sm hover:bg-blue-500 transition-colors shadow-lg shadow-blue-500/20 active:scale-95">Close</button>
-        </div>
+          Try Live Demo <ChevronRight size={12} />
+        </button>
       </div>
+
+      {/* Navigation Header */}
+      <header className="sticky top-0 z-50 bg-[#0a0d14]/80 backdrop-blur-xl border-b border-slate-800/80">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20 font-black text-black text-lg">
+              S
+            </div>
+            <div>
+              <span className="font-black text-lg tracking-tight text-white">SAI</span>
+              <span className="ml-2 text-[10px] font-mono uppercase tracking-widest text-cyan-400 px-2 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/20">
+                Production Engineer
+              </span>
+            </div>
+          </div>
+
+          <nav className="hidden md:flex items-center gap-8 text-xs font-medium text-slate-400">
+            <a href="#capabilities" className="hover:text-cyan-400 transition-colors">Capabilities</a>
+            <a href="#before-after" className="hover:text-cyan-400 transition-colors">Before & After</a>
+            <a href="#topology" className="hover:text-cyan-400 transition-colors">Application Twin</a>
+            <a href="#simulator" className="hover:text-cyan-400 transition-colors">Scale Simulator</a>
+            <a href="#finops" className="hover:text-cyan-400 transition-colors">FinOps Arbitrage</a>
+            <a href="#certificate" className="hover:text-cyan-400 transition-colors">Verification</a>
+            <a href="#pricing" className="hover:text-cyan-400 transition-colors">Pricing</a>
+          </nav>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={onLaunch}
+              className="px-4 py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white bg-slate-800/60 hover:bg-slate-800 border border-slate-700 transition-all"
+            >
+              Log In
+            </button>
+            <button
+              onClick={onLaunch}
+              className="px-5 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-cyan-400 to-blue-500 text-black hover:from-cyan-300 hover:to-blue-400 shadow-lg shadow-cyan-500/20 transition-all flex items-center gap-1.5"
+            >
+              <span>Analyze Repo</span>
+              <ArrowRight size={14} />
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* HERO SECTION */}
+      <section className="relative pt-20 pb-28 px-6 overflow-hidden">
+        {/* Glow Gradients */}
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-gradient-to-tr from-cyan-500/15 via-blue-600/10 to-transparent blur-[120px] pointer-events-none rounded-full" />
+        <div className="absolute top-1/3 left-1/4 w-80 h-80 bg-purple-600/10 blur-[100px] pointer-events-none rounded-full" />
+
+        <div className="max-w-5xl mx-auto text-center relative z-10">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-950/70 border border-cyan-500/30 text-cyan-300 text-xs font-mono mb-8 backdrop-blur-md shadow-lg shadow-cyan-950/50">
+            <Sparkles size={14} className="text-cyan-400" />
+            <span>AI Built Your Code. SAI Makes It Production-Grade.</span>
+          </div>
+
+          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tight text-white leading-[1.08]">
+            Your code works. <br />
+            <span className="bg-gradient-to-r from-cyan-400 via-teal-300 to-blue-500 bg-clip-text text-transparent">
+              Now make it production-ready.
+            </span>
+          </h1>
+
+          <p className="mt-8 text-lg sm:text-xl text-slate-300 max-w-3xl mx-auto font-normal leading-relaxed">
+            AI code assistants generate functional software in minutes, but leave behind security leaks, unmanaged DB connections, and runaway cloud bills. SAI analyzes your repository, reverse-engineers its architecture, remedies vulnerabilities, and provisions production infrastructure.
+          </p>
+
+          {/* Repo Input Box */}
+          <div className="mt-12 max-w-2xl mx-auto">
+            <div className="p-2 bg-slate-900/90 border border-slate-700/80 rounded-2xl shadow-2xl shadow-black/80 backdrop-blur-xl flex flex-col sm:flex-row items-center gap-2 group hover:border-cyan-500/60 transition-all">
+              <div className="flex items-center gap-3 flex-1 w-full px-3">
+                <Github size={22} className="text-slate-400 group-hover:text-cyan-400 transition-colors shrink-0" />
+                <input
+                  type="text"
+                  value={repoInput}
+                  onChange={(e) => setRepoInput(e.target.value)}
+                  placeholder="github.com/organization/repository"
+                  className="bg-transparent border-none text-sm font-mono text-white placeholder-slate-500 focus:outline-none w-full"
+                />
+              </div>
+              <button
+                onClick={onLaunch}
+                className="w-full sm:w-auto px-7 py-3.5 bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-black font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-cyan-500/25 flex items-center justify-center gap-2 shrink-0 active:scale-95"
+              >
+                <span>Analyze Repository</span>
+                <ArrowRight size={16} />
+              </button>
+            </div>
+
+            {/* Quick Samples */}
+            <div className="mt-3 flex items-center justify-center gap-2 text-xs text-slate-400 flex-wrap">
+              <span className="text-slate-500 font-mono text-[11px]">Or test sample:</span>
+              {sampleRepos.map((sample, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleSelectSample(sample)}
+                  className="px-2.5 py-1 rounded-lg bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 text-slate-300 font-mono text-[11px] hover:text-cyan-300 transition-colors"
+                >
+                  {sample.split('/').pop()}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Supported Ecosystem Badges */}
+          <div className="mt-14 pt-10 border-t border-slate-800/80">
+            <p className="text-xs uppercase font-mono tracking-widest text-slate-500 mb-4">
+              Hardens raw repositories built with:
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-2.5">
+              {ECOSYSTEM_TOOLS.map((tool) => (
+                <span
+                  key={tool}
+                  className="px-3.5 py-1.5 rounded-lg bg-slate-900/60 border border-slate-800 text-xs font-mono text-slate-300 hover:border-slate-700 transition-colors"
+                >
+                  {tool}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION: 5 CORE CAPABILITIES */}
+      <section id="capabilities" className="py-24 px-6 bg-[#080b10] border-t border-b border-slate-800/80">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <span className="text-cyan-400 font-mono text-xs uppercase tracking-widest">
+              Core Capabilities
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-white mt-2">
+              Beyond code generation: The complete software-to-production engine
+            </h2>
+            <p className="text-slate-400 mt-4 text-base">
+              Coding agents generate lines of code. SAI operates like an experienced principal engineer, transforming raw prototypes into hardened, monitored, and scaled infrastructure.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-5">
+            {CAPABILITY_CARDS.map((card) => (
+              <div
+                key={card.id}
+                className="bg-slate-900/60 border border-slate-800 hover:border-cyan-500/50 p-6 rounded-2xl transition-all hover:-translate-y-1 group relative flex flex-col justify-between"
+              >
+                <div>
+                  <div className="w-12 h-12 rounded-xl bg-slate-800/80 border border-slate-700 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+                    {card.icon}
+                  </div>
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-slate-500">
+                    {card.category}
+                  </span>
+                  <h3 className="text-lg font-bold text-white mt-1 mb-2">
+                    {card.title}
+                  </h3>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    {card.description}
+                  </p>
+                </div>
+                <div className="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between">
+                  <span className="text-[11px] font-mono text-cyan-400 font-semibold">
+                    {card.stat}
+                  </span>
+                  <ChevronRight size={14} className="text-slate-600 group-hover:text-cyan-400 transition-colors" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION: BEFORE VS AFTER COMPARISON */}
+      <section id="before-after" className="py-24 px-6 relative overflow-hidden">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <span className="text-cyan-400 font-mono text-xs uppercase tracking-widest">
+              Interactive Diagnostic
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-white mt-2">
+              What changes when SAI engineers your repo?
+            </h2>
+            <p className="text-slate-400 mt-3 text-sm">
+              Toggle between raw AI-generated code and the verified production-ready output.
+            </p>
+
+            {/* Toggle Switch */}
+            <div className="mt-8 inline-flex p-1 rounded-xl bg-slate-900 border border-slate-800">
+              <button
+                onClick={() => setComparisonTab('before')}
+                className={`px-5 py-2 rounded-lg text-xs font-mono font-bold transition-all flex items-center gap-2 ${
+                  comparisonTab === 'before'
+                    ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <XCircle size={14} />
+                <span>Raw AI Output (Score: 42)</span>
+              </button>
+              <button
+                onClick={() => setComparisonTab('after')}
+                className={`px-5 py-2 rounded-lg text-xs font-mono font-bold transition-all flex items-center gap-2 ${
+                  comparisonTab === 'after'
+                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <CheckCircle size={14} />
+                <span>SAI Production-Grade (Score: 93)</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Comparison Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+            {/* Left Card: Before State */}
+            <div className={`rounded-2xl border p-8 transition-all ${
+              comparisonTab === 'before'
+                ? 'bg-rose-950/10 border-rose-500/40 shadow-2xl shadow-rose-950/30 ring-1 ring-rose-500/20'
+                : 'bg-slate-900/40 border-slate-800 opacity-60'
+            }`}>
+              <div className="flex items-center justify-between pb-6 border-b border-slate-800">
+                <div>
+                  <span className="text-xs font-mono uppercase text-rose-400 tracking-wider">Before SAI Remediation</span>
+                  <h3 className="text-xl font-extrabold text-white mt-1">Raw Prototype / Cursor / Lovable</h3>
+                </div>
+                <div className="text-right">
+                  <div className="text-3xl font-black text-rose-400 font-mono">42 / 100</div>
+                  <span className="text-[10px] font-mono text-rose-300 uppercase">Failing Readiness</span>
+                </div>
+              </div>
+
+              <div className="mt-6 space-y-4">
+                <div className="p-3.5 rounded-xl bg-slate-900/80 border border-rose-500/20 flex items-start gap-3">
+                  <Lock size={18} className="text-rose-400 mt-0.5 shrink-0" />
+                  <div>
+                    <h4 className="text-xs font-bold text-rose-300">Hardcoded JWT Secret & API Keys</h4>
+                    <p className="text-[11px] text-slate-400 mt-0.5">Found plain-text keys in .env tracked in git history; secrets exposed in client bundle.</p>
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-slate-900/80 border border-rose-500/20 flex items-start gap-3">
+                  <Container size={18} className="text-rose-400 mt-0.5 shrink-0" />
+                  <div>
+                    <h4 className="text-xs font-bold text-rose-300">Container Runs as Root User</h4>
+                    <p className="text-[11px] text-slate-400 mt-0.5">Single-stage Dockerfile with root execution; 1.2 GB image size with development devDependencies.</p>
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-slate-900/80 border border-rose-500/20 flex items-start gap-3">
+                  <Database size={18} className="text-rose-400 mt-0.5 shrink-0" />
+                  <div>
+                    <h4 className="text-xs font-bold text-rose-300">Unbounded DB Connection Pool</h4>
+                    <p className="text-[11px] text-slate-400 mt-0.5">Direct DB connection created per serverless request. Crashes Postgres under 50 concurrent users.</p>
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-slate-900/80 border border-rose-500/20 flex items-start gap-3">
+                  <AlertTriangle size={18} className="text-rose-400 mt-0.5 shrink-0" />
+                  <div>
+                    <h4 className="text-xs font-bold text-rose-300">No Liveness or Graceful Shutdown</h4>
+                    <p className="text-[11px] text-slate-400 mt-0.5">Missing /health probe. Drops in-flight customer transactions on every deployment or scale-down.</p>
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-slate-900/80 border border-rose-500/20 flex items-start gap-3">
+                  <DollarSign size={18} className="text-rose-400 mt-0.5 shrink-0" />
+                  <div>
+                    <h4 className="text-xs font-bold text-rose-300">PaaS Markup: $1,820 / month</h4>
+                    <p className="text-[11px] text-slate-400 mt-0.5">Proprietary serverless runtime charging 10× markups on function executions and bandwidth egress.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Card: After State */}
+            <div className={`rounded-2xl border p-8 transition-all ${
+              comparisonTab === 'after'
+                ? 'bg-cyan-950/15 border-cyan-500/40 shadow-2xl shadow-cyan-950/40 ring-1 ring-cyan-500/30'
+                : 'bg-slate-900/40 border-slate-800 opacity-60'
+            }`}>
+              <div className="flex items-center justify-between pb-6 border-b border-slate-800">
+                <div>
+                  <span className="text-xs font-mono uppercase text-cyan-400 tracking-wider">After SAI Remediation</span>
+                  <h3 className="text-xl font-extrabold text-white mt-1">Production-Grade Infrastructure</h3>
+                </div>
+                <div className="text-right">
+                  <div className="text-3xl font-black text-cyan-400 font-mono">93 / 100</div>
+                  <span className="text-[10px] font-mono text-cyan-300 uppercase">Certified Ready</span>
+                </div>
+              </div>
+
+              <div className="mt-6 space-y-4">
+                <div className="p-3.5 rounded-xl bg-slate-900/80 border border-cyan-500/20 flex items-start gap-3">
+                  <KeyRound size={18} className="text-cyan-400 mt-0.5 shrink-0" />
+                  <div>
+                    <h4 className="text-xs font-bold text-cyan-300">Azure Key Vault & GitHub OIDC</h4>
+                    <p className="text-[11px] text-slate-400 mt-0.5">Zero persistent secrets in repo. Cloud provider federated OIDC identity used for all CI/CD actions.</p>
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-slate-900/80 border border-cyan-500/20 flex items-start gap-3">
+                  <Container size={18} className="text-cyan-400 mt-0.5 shrink-0" />
+                  <div>
+                    <h4 className="text-xs font-bold text-cyan-300">Hardened Multi-Stage Alpine Container</h4>
+                    <p className="text-[11px] text-slate-400 mt-0.5">Non-root UID 10001, isolated production layer, pruned devDependencies. Image reduced to 112 MB.</p>
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-slate-900/80 border border-cyan-500/20 flex items-start gap-3">
+                  <Database size={18} className="text-cyan-400 mt-0.5 shrink-0" />
+                  <div>
+                    <h4 className="text-xs font-bold text-cyan-300">PgBouncer Connection Pooling</h4>
+                    <p className="text-[11px] text-slate-400 mt-0.5">Configured connection pooler with exponential backoff. Safely supports 10,000+ burst connections.</p>
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-slate-900/80 border border-cyan-500/20 flex items-start gap-3">
+                  <Activity size={18} className="text-cyan-400 mt-0.5 shrink-0" />
+                  <div>
+                    <h4 className="text-xs font-bold text-cyan-300">Dual Health Probes & SIGTERM Handling</h4>
+                    <p className="text-[11px] text-slate-400 mt-0.5">HTTP /health and /ready probes with 10s graceful shutdown drain. Zero dropped user requests.</p>
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-slate-900/80 border border-cyan-500/20 flex items-start gap-3">
+                  <DollarSign size={18} className="text-cyan-400 mt-0.5 shrink-0" />
+                  <div>
+                    <h4 className="text-xs font-bold text-cyan-300">Azure Container Apps: $64 / month</h4>
+                    <p className="text-[11px] text-slate-400 mt-0.5">Scale-to-zero serverless containers on Azure hyperscaler. Saves $1,756/mo ($21,072/year).</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-10 text-center">
+            <button
+              onClick={onLaunch}
+              className="px-8 py-4 bg-gradient-to-r from-cyan-400 to-blue-500 text-black font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-xl shadow-cyan-500/20 hover:from-cyan-300 hover:to-blue-400 transition-all inline-flex items-center gap-2"
+            >
+              <span>Audit Your Repo Now</span>
+              <ArrowRight size={16} />
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION: APPLICATION TWIN & TOPOLOGY */}
+      <section id="topology" className="py-24 px-6 bg-[#080b10] border-t border-slate-800">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <span className="text-cyan-400 font-mono text-xs uppercase tracking-widest">
+              Live Topology Mapping
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-white mt-2">
+              The Application Twin Engine
+            </h2>
+            <p className="text-slate-400 mt-4 text-base">
+              SAI scans your entire AST, configuration files, and package manifests to reverse-engineer your application topology into a living architectural digital twin.
+            </p>
+          </div>
+
+          {/* Interactive Topology Diagram */}
+          <div className="p-8 rounded-3xl bg-slate-900/80 border border-slate-800 shadow-2xl relative overflow-hidden">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-6 items-center">
+              {/* Node 1: Edge & Ingress */}
+              <div className="p-5 rounded-2xl bg-slate-950/90 border border-blue-500/30 text-center relative group">
+                <span className="text-[9px] font-mono text-blue-400 uppercase tracking-widest block mb-2">Ingress</span>
+                <div className="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mx-auto mb-3">
+                  <Workflow size={24} className="text-blue-400" />
+                </div>
+                <h4 className="text-sm font-bold text-white">Azure Front Door</h4>
+                <p className="text-[11px] text-slate-400 mt-1">Global Edge CDN, TLS 1.3, DDoS protection</p>
+                <div className="mt-3 inline-block px-2 py-0.5 rounded bg-blue-500/10 text-blue-300 text-[10px] font-mono">
+                  Route: /*
+                </div>
+              </div>
+
+              {/* Connector */}
+              <div className="hidden md:flex flex-col items-center justify-center text-slate-600 font-mono text-xs">
+                <span>&rarr;</span>
+                <span className="text-[10px] text-cyan-400">gRPC/HTTP</span>
+              </div>
+
+              {/* Node 2: Container Apps Compute */}
+              <div className="p-5 rounded-2xl bg-slate-950/90 border border-cyan-500/40 text-center relative group ring-1 ring-cyan-500/20">
+                <span className="text-[9px] font-mono text-cyan-400 uppercase tracking-widest block mb-2">Compute Fleet</span>
+                <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mx-auto mb-3">
+                  <Container size={24} className="text-cyan-400" />
+                </div>
+                <h4 className="text-sm font-bold text-white">Azure Container Apps</h4>
+                <p className="text-[11px] text-slate-400 mt-1">Multi-stage Alpine, 0.5 vCPU / 1GB, scale 0&rarr;10</p>
+                <div className="mt-3 inline-block px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 text-[10px] font-mono">
+                  Healthy: 200 OK
+                </div>
+              </div>
+
+              {/* Connector */}
+              <div className="hidden md:flex flex-col items-center justify-center text-slate-600 font-mono text-xs">
+                <span>&rarr;</span>
+                <span className="text-[10px] text-purple-400">Pooled SQL</span>
+              </div>
+
+              {/* Node 3: Storage & Secrets */}
+              <div className="p-5 rounded-2xl bg-slate-950/90 border border-purple-500/30 text-center relative group">
+                <span className="text-[9px] font-mono text-purple-400 uppercase tracking-widest block mb-2">Persistence & Secrets</span>
+                <div className="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mx-auto mb-3">
+                  <Database size={24} className="text-purple-400" />
+                </div>
+                <h4 className="text-sm font-bold text-white">PostgreSQL + Key Vault</h4>
+                <p className="text-[11px] text-slate-400 mt-1">PgBouncer pool, AES-256 at rest, zero plaintext keys</p>
+                <div className="mt-3 inline-block px-2 py-0.5 rounded bg-purple-500/10 text-purple-300 text-[10px] font-mono">
+                  Pool: 20 Max
+                </div>
+              </div>
+            </div>
+
+            {/* Architecture Metrics Footer */}
+            <div className="mt-8 pt-6 border-t border-slate-800 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+              <div>
+                <span className="text-[10px] font-mono uppercase text-slate-500">Dependencies Discovered</span>
+                <div className="text-lg font-bold text-white font-mono mt-0.5">27 Packages</div>
+              </div>
+              <div>
+                <span className="text-[10px] font-mono uppercase text-slate-500">Egress Sinks</span>
+                <div className="text-lg font-bold text-cyan-400 font-mono mt-0.5">3 (OpenAI, Stripe, DB)</div>
+              </div>
+              <div>
+                <span className="text-[10px] font-mono uppercase text-slate-500">Cold Start Latency</span>
+                <div className="text-lg font-bold text-emerald-400 font-mono mt-0.5">&lt; 320ms</div>
+              </div>
+              <div>
+                <span className="text-[10px] font-mono uppercase text-slate-500">SLO Reliability Target</span>
+                <div className="text-lg font-bold text-white font-mono mt-0.5">99.95%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION: WHAT-IF ARCHITECTURE SIMULATOR */}
+      <section id="simulator" className="py-24 px-6 relative overflow-hidden">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <span className="text-amber-400 font-mono text-xs uppercase tracking-widest">
+              Stress-Testing Before Launch
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-white mt-2">
+              SAI What-If Architecture Simulator
+            </h2>
+            <p className="text-slate-400 mt-3 text-sm">
+              Predict traffic bottlenecks, connection pool exhaustion, and memory leaks before they impact customers.
+            </p>
+
+            {/* Traffic Presets Selector */}
+            <div className="mt-8 flex items-center justify-center gap-3">
+              {TRAFFIC_PRESETS.map((preset, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setActiveScaleIndex(idx)}
+                  className={`px-5 py-2.5 rounded-xl text-xs font-mono font-bold transition-all ${
+                    activeScaleIndex === idx
+                      ? 'bg-amber-400 text-black shadow-lg shadow-amber-400/20 scale-105'
+                      : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  {preset.level}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Simulator Visualizer */}
+          {(() => {
+            const activePreset = TRAFFIC_PRESETS[activeScaleIndex];
+            return (
+              <div className="p-8 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl relative">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-6 border-b border-slate-800 gap-4">
+                  <div>
+                    <span className="text-xs font-mono text-amber-400 uppercase">Simulated Daily Traffic</span>
+                    <h3 className="text-2xl font-black text-white mt-1">{activePreset.reqs}</h3>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-mono text-slate-400">Simulation Status:</span>
+                    <span className={`px-3 py-1 rounded-full text-xs font-mono font-bold ${
+                      activePreset.status === 'Optimal'
+                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                        : activePreset.status === 'Healthy'
+                        ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+                        : 'bg-rose-500/20 text-rose-300 border border-rose-500/30 animate-pulse'
+                    }`}>
+                      {activePreset.status}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 my-8">
+                  <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800">
+                    <span className="text-xs font-mono text-slate-500 uppercase">DB Pool Saturation</span>
+                    <div className="text-3xl font-black text-white font-mono mt-2">{activePreset.dbPool}</div>
+                    <div className="w-full bg-slate-800 h-2 rounded-full mt-3 overflow-hidden">
+                      <div 
+                        className={`h-full transition-all duration-500 ${
+                          parseInt(activePreset.dbPool) > 80 ? 'bg-rose-500' : 'bg-cyan-400'
+                        }`}
+                        style={{ width: activePreset.dbPool }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800">
+                    <span className="text-xs font-mono text-slate-500 uppercase">Estimated P99 Latency</span>
+                    <div className="text-3xl font-black text-cyan-400 font-mono mt-2">{activePreset.latency}</div>
+                    <p className="text-[11px] text-slate-500 mt-2 font-mono">Edge-to-DB roundtrip</p>
+                  </div>
+
+                  <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800">
+                    <span className="text-xs font-mono text-slate-500 uppercase">Hyperscaler Cloud Spend</span>
+                    <div className="text-3xl font-black text-emerald-400 font-mono mt-2">{activePreset.cost}</div>
+                    <p className="text-[11px] text-slate-500 mt-2 font-mono">Azure Container Apps + DB</p>
+                  </div>
+                </div>
+
+                {activePreset.warning && (
+                  <div className="p-4 rounded-xl bg-amber-950/20 border border-amber-500/30 flex items-start gap-3">
+                    <AlertTriangle size={18} className="text-amber-400 shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="text-xs font-bold text-amber-300">Bottleneck Advisory</h4>
+                      <p className="text-xs text-slate-300 mt-0.5">{activePreset.warning}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+        </div>
+      </section>
+
+      {/* SECTION: FINOPS CLOUD ARBITRAGE */}
+      <section id="finops" className="py-24 px-6 bg-[#080b10] border-t border-slate-800">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <span className="text-emerald-400 font-mono text-xs uppercase tracking-widest">
+              FinOps Cloud Defense
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-white mt-2">
+              Stop paying 10× markups on PaaS runtime
+            </h2>
+            <p className="text-slate-400 mt-4 text-base">
+              Proprietary platforms charge extreme premiums for bandwidth egress and function timeouts. SAI packages your code for native hyperscalers, slashing your monthly cloud bill by up to 96%.
+            </p>
+          </div>
+
+          {/* Pricing Comparison Table */}
+          <div className="rounded-3xl border border-slate-800 bg-slate-900/60 overflow-hidden shadow-2xl">
+            <div className="grid grid-cols-1 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-slate-800">
+              {/* Azure ACA (Recommended) */}
+              <div className="p-8 bg-cyan-950/20 relative">
+                <div className="inline-block px-2.5 py-0.5 rounded-full bg-cyan-400/10 border border-cyan-400/20 text-cyan-300 text-[10px] font-mono uppercase tracking-wider mb-4">
+                  Recommended V1
+                </div>
+                <h3 className="text-lg font-bold text-white">Azure Container Apps</h3>
+                <div className="mt-4 flex items-baseline gap-1">
+                  <span className="text-4xl font-black text-cyan-400 font-mono">$64</span>
+                  <span className="text-xs text-slate-400 font-mono">/ month</span>
+                </div>
+                <p className="text-xs text-slate-400 mt-2">Scale-to-zero microservices, native OIDC, Azure Key Vault integration.</p>
+                <div className="mt-6 pt-4 border-t border-slate-800 text-[11px] font-mono text-emerald-400">
+                  &bull; 96% Cheaper than PaaS
+                </div>
+              </div>
+
+              {/* AWS ECS Fargate */}
+              <div className="p-8">
+                <span className="text-xs font-mono text-slate-500 uppercase block mb-4">Hyperscaler</span>
+                <h3 className="text-lg font-bold text-white">AWS ECS Fargate</h3>
+                <div className="mt-4 flex items-baseline gap-1">
+                  <span className="text-4xl font-black text-white font-mono">$81</span>
+                  <span className="text-xs text-slate-400 font-mono">/ month</span>
+                </div>
+                <p className="text-xs text-slate-400 mt-2">Serverless container fleet with AWS Secrets Manager and ALB.</p>
+                <div className="mt-6 pt-4 border-t border-slate-800 text-[11px] font-mono text-slate-400">
+                  &bull; Enterprise standard
+                </div>
+              </div>
+
+              {/* GCP Cloud Run */}
+              <div className="p-8">
+                <span className="text-xs font-mono text-slate-500 uppercase block mb-4">Hyperscaler</span>
+                <h3 className="text-lg font-bold text-white">GCP Cloud Run</h3>
+                <div className="mt-4 flex items-baseline gap-1">
+                  <span className="text-4xl font-black text-white font-mono">$73</span>
+                  <span className="text-xs text-slate-400 font-mono">/ month</span>
+                </div>
+                <p className="text-xs text-slate-400 mt-2">Fast cold starts with Google Cloud Secret Manager integration.</p>
+                <div className="mt-6 pt-4 border-t border-slate-800 text-[11px] font-mono text-slate-400">
+                  &bull; Global anycast
+                </div>
+              </div>
+
+              {/* Proprietary PaaS (Vercel) */}
+              <div className="p-8 bg-rose-950/10">
+                <span className="text-xs font-mono text-rose-400 uppercase block mb-4">Proprietary PaaS</span>
+                <h3 className="text-lg font-bold text-white">Vercel Enterprise</h3>
+                <div className="mt-4 flex items-baseline gap-1">
+                  <span className="text-4xl font-black text-rose-400 font-mono">$1,820</span>
+                  <span className="text-xs text-slate-400 font-mono">/ month</span>
+                </div>
+                <p className="text-xs text-slate-400 mt-2">Heavy serverless execution limits, bandwidth egress fees, user seats.</p>
+                <div className="mt-6 pt-4 border-t border-slate-800 text-[11px] font-mono text-rose-400">
+                  &bull; High vendor lock-in
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 bg-slate-950 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                  <DollarSign size={20} className="text-emerald-400" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-white">Annual FinOps Arbitrage Savings</h4>
+                  <p className="text-xs text-slate-400">Deploying via SAI saves approximately <strong>$1,756 every month</strong> ($21,072 / year).</p>
+                </div>
+              </div>
+              <button
+                onClick={onLaunch}
+                className="px-6 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-mono font-bold text-white transition-all shrink-0"
+              >
+                Calculate My Repo Savings
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION: VERIFIABLE PRODUCTION CERTIFICATE */}
+      <section id="certificate" className="py-24 px-6 relative overflow-hidden">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center max-w-2xl mx-auto mb-14">
+            <span className="text-cyan-400 font-mono text-xs uppercase tracking-widest">
+              Proof of Production-Grade
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-white mt-2">
+              Cryptographic SAI Verification
+            </h2>
+            <p className="text-slate-400 mt-3 text-sm">
+              Show users, investors, and security auditors that your AI application meets strict enterprise production criteria.
+            </p>
+          </div>
+
+          {/* Certificate Card Preview */}
+          <div className="p-8 sm:p-10 rounded-3xl bg-gradient-to-b from-slate-900 to-slate-950 border border-cyan-500/40 shadow-2xl shadow-cyan-950/40 relative">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center">
+                  <ShieldCheck size={22} className="text-cyan-400" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-mono text-cyan-400 uppercase tracking-widest">Official Audit Record</span>
+                  <h3 className="text-lg font-black text-white">SAI Production Certificate</h3>
+                </div>
+              </div>
+              <div className="px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 font-mono text-xs font-bold">
+                CERTIFIED GRADE A
+              </div>
+            </div>
+
+            <div className="my-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800">
+                <span className="text-[10px] font-mono uppercase text-slate-500">Security</span>
+                <div className="text-xl font-black text-emerald-400 font-mono mt-1">95 / 100</div>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800">
+                <span className="text-[10px] font-mono uppercase text-slate-500">Reliability</span>
+                <div className="text-xl font-black text-emerald-400 font-mono mt-1">92 / 100</div>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800">
+                <span className="text-[10px] font-mono uppercase text-slate-500">Architecture</span>
+                <div className="text-xl font-black text-emerald-400 font-mono mt-1">90 / 100</div>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800">
+                <span className="text-[10px] font-mono uppercase text-slate-500">FinOps</span>
+                <div className="text-xl font-black text-emerald-400 font-mono mt-1">96 / 100</div>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-xl bg-slate-950 font-mono text-xs border border-slate-800 text-slate-400 space-y-1">
+              <div className="flex justify-between">
+                <span>Certificate ID:</span>
+                <span className="text-cyan-300 font-bold">cert_prod_9f82a1e3</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Verification URL:</span>
+                <span className="text-slate-300">sai.dev/verify/cert_prod_9f82a1e3</span>
+              </div>
+              <div className="flex justify-between">
+                <span>SHA-256 Digest:</span>
+                <span className="text-slate-500 truncate max-w-[240px]">e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b</span>
+              </div>
+            </div>
+
+            {/* Badge Embed Bar */}
+            <div className="mt-6 pt-6 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <img
+                  src="https://img.shields.io/badge/SAI-Production%20Grade%2093%2F100-success?style=flat-square"
+                  alt="SAI Production Grade Badge"
+                  className="h-6"
+                />
+                <span className="text-xs text-slate-400">Embed official shield on your GitHub README</span>
+              </div>
+
+              <button
+                onClick={handleCopyBadge}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-mono font-bold text-white transition-all flex items-center gap-2"
+              >
+                {copiedBadge ? (
+                  <>
+                    <Check size={14} className="text-emerald-400" />
+                    <span>Copied Markdown!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy size={14} />
+                    <span>Copy Badge Markdown</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION: COMMERCIAL PACKAGES / PRICING */}
+      <section id="pricing" className="py-24 px-6 bg-[#080b10] border-t border-slate-800">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <span className="text-cyan-400 font-mono text-xs uppercase tracking-widest">
+              Simple Commercial Pricing
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-white mt-2">
+              Predictable pricing for production software
+            </h2>
+            <p className="text-slate-400 mt-4 text-base">
+              Start with a free audit. Upgrade when you need automated code remediation or turnkey Azure cloud deployment.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {PRICING_PACKAGES.map((pkg) => (
+              <div
+                key={pkg.id}
+                className={`p-7 rounded-3xl border transition-all flex flex-col justify-between ${
+                  pkg.highlight
+                    ? 'bg-gradient-to-b from-cyan-950/40 to-slate-900 border-cyan-500 shadow-2xl shadow-cyan-950/50 ring-1 ring-cyan-500/50 -translate-y-2'
+                    : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
+                }`}
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[10px] font-mono uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-slate-300">
+                      {pkg.badge}
+                    </span>
+                  </div>
+
+                  <h3 className="text-xl font-extrabold text-white">{pkg.name}</h3>
+
+                  <div className="mt-4 flex items-baseline gap-1">
+                    <span className="text-4xl font-black text-white font-mono">{pkg.price}</span>
+                    <span className="text-xs text-slate-400 font-mono uppercase">/{pkg.frequency}</span>
+                  </div>
+
+                  <p className="text-xs text-slate-400 mt-3 leading-relaxed">
+                    {pkg.description}
+                  </p>
+
+                  <div className="my-6 border-t border-slate-800" />
+
+                  <ul className="space-y-3">
+                    {pkg.features.map((feat, i) => (
+                      <li key={i} className="flex items-start gap-2.5 text-xs text-slate-300">
+                        <Check size={14} className="text-cyan-400 shrink-0 mt-0.5" />
+                        <span className="leading-snug">{feat}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="mt-8">
+                  <button
+                    onClick={pkg.id === 'scan' ? onLaunch : onSubscribe}
+                    className={`w-full py-3.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
+                      pkg.highlight
+                        ? 'bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-black shadow-lg shadow-cyan-500/25 active:scale-95'
+                        : 'bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 active:scale-95'
+                    }`}
+                  >
+                    <span>{pkg.cta}</span>
+                    <ArrowRight size={14} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FINAL CALL TO ACTION */}
+      <section className="py-24 px-6 relative overflow-hidden bg-gradient-to-b from-[#080b10] to-[#0a0d14] border-t border-slate-800">
+        <div className="max-w-4xl mx-auto text-center relative z-10">
+          <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center mx-auto mb-6">
+            <Rocket size={28} className="text-cyan-400" />
+          </div>
+
+          <h2 className="text-4xl sm:text-5xl font-black text-white tracking-tight">
+            Ready to make your AI application production-grade?
+          </h2>
+
+          <p className="mt-4 text-slate-300 text-base max-w-xl mx-auto">
+            Scan any GitHub repository in 30 seconds. Get your 5-pillar scorecard, Application Twin topology, and automated cloud remediation plan.
+          </p>
+
+          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+            <button
+              onClick={onLaunch}
+              className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-black font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all shadow-xl shadow-cyan-500/25 flex items-center justify-center gap-2"
+            >
+              <span>Launch SAI Production Engineer</span>
+              <ArrowRight size={16} />
+            </button>
+            <a
+              href="https://github.com/anomalyco/saicide"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full sm:w-auto px-6 py-4 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2"
+            >
+              <Github size={16} />
+              <span>View Source on GitHub</span>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
-};
-
-const ModelProviderCard: React.FC<{name: string, doodleIcon: React.ReactNode}> = ({name, doodleIcon}) => {
-    const fontSizeClass = name.length > 8 ? 'text-2xl' : name.length > 6 ? 'text-3xl' : 'text-4xl';
-
-    return (
-        <div className="h-[270px] bg-slate-800/50 border border-white/10 p-6 rounded-2xl hover:bg-slate-800/80 hover:-translate-y-2 transition-all relative overflow-hidden group backdrop-blur-sm shadow-2xl shadow-black/40 flex flex-col">
-            <div className="absolute -right-8 -bottom-8 text-white/5 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-[-6deg] z-0">
-                {doodleIcon}
-            </div>
-            <div className="relative z-10 flex items-start justify-between gap-2">
-                <h3 className={`font-mono text-white font-black leading-tight break-words ${fontSizeClass}`}>{name}</h3>
-                <div className="flex-shrink-0 flex items-center gap-1.5 text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-full border border-emerald-500/20">
-                    <CheckCircle size={12}/>
-                    <span className="text-[10px] font-bold">Verified</span>
-                </div>
-            </div>
-            <p className="text-sm text-gray-400 mt-auto relative z-10 group-hover:text-gray-200 transition-colors">Industry-leading models for a variety of synthesis tasks.</p>
-        </div>
-    );
 };
 
 export default LandingPage;
