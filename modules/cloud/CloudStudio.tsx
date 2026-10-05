@@ -5,7 +5,7 @@ import {
   SecurityPolicy, SecurityIssue, Extension, AIPersona, 
   RemoteUserState, AppEvent, AppPlan, ProjectStatus, MenuCategory, Severity, Commit, ChangeItem, MCPServer, Command, IdentityTab, DiffData, AgentStep, Recording,
   EditorTabGroup, EditorTab, ViewMode, Project, DesignName,
-  Comment, Task, AgendaItem, GitStatus, PromptTemplate
+  Comment, Task, AgendaItem, GitStatus
 } from '../../types';
 import { 
   MOCK_TEAM_MEMBERS, 
@@ -126,12 +126,10 @@ const CollaborationSidebarPane = React.lazy(() => import('../../components/colla
 const TeamCollaborationPane = React.lazy(() => import('../../components/TeamCollaborationPane').then(m => ({ default: m.TeamCollaborationPane })));
 const GhostAgent = React.lazy(() => import('../../components/GhostAgent'));
 const DeploymentCenter = React.lazy(() => import('../../components/DeploymentCenter'));
-const TeamHub = React.lazy(() => import('../../components/TeamHub'));
 const FloatingChatWidget = React.lazy(() => import('../../components/collaboration/FloatingChatWidget').then(m => ({ default: m.FloatingChatWidget })));
 const VideoGrid = React.lazy(() => import('../../components/collaboration/VideoGrid'));
 const LiveSessionChat = React.lazy(() => import('../../components/collaboration/LiveSessionChat'));
 const IntegrationsPane = React.lazy(() => import('../../components/IntegrationsPane'));
-const PromptLibrary = React.lazy(() => import('../../components/TemplateLibrary'));
 const MicaAssistant = React.lazy(() => import('../../components/MicaAssistant'));
 const MlStudioPane = React.lazy(() => import('../../components/MlStudioPane'));
 const ProductionEngineerView = React.lazy(() => import('../../components/production/ProductionEngineerView'));
@@ -857,14 +855,12 @@ const CloudStudio: React.FC<CloudStudioProps> = ({ design, setDesign }) => {
     const user = authService.getCurrentUser();
     if (user) {
         setCurrentUser(user);
-        // Initialize dynamic team list with current user
         setTeamMembers([user]);
-        if (!localStorage.getItem('sai_onboarded')) {
-            setTimeout(() => setIsOnboardingOpen(true), 800);
-        }
     } else {
-        setTeamMembers([]);
+        setCurrentUser(DEFAULT_UNRESTRICTED_USER);
+        setTeamMembers([DEFAULT_UNRESTRICTED_USER]);
     }
+    localStorage.setItem('sai_onboarded', 'true');
   }, []);
 
   // Handle GitHub OAuth callback - check for stored OAuth code after redirect
@@ -1258,11 +1254,9 @@ const CloudStudio: React.FC<CloudStudioProps> = ({ design, setDesign }) => {
   const handleAuthSuccess = (user: TeamMember) => { 
     setCurrentUser(user); 
     setIsAuthModalOpen(false); 
-    
-    // Immediately check for onboarding after auth
-    if (!localStorage.getItem('sai_onboarded')) {
-        setTimeout(() => setIsOnboardingOpen(true), 500);
-    }
+    setViewMode(ViewMode.WORKSPACE);
+    setActivePanel(Panel.PRODUCTION_ENGINEER);
+    localStorage.setItem('sai_onboarded', 'true');
   };
 
   const handleToggleMcp = (id: string) => {
@@ -1502,14 +1496,6 @@ const CloudStudio: React.FC<CloudStudioProps> = ({ design, setDesign }) => {
     }
   };
 
-  const handlePromptTemplateSynthesis = (tpl: PromptTemplate) => {
-      handleLaunchWorkspace(tpl.title);
-      // Initiate AI Synthesis flow
-      setTimeout(() => {
-          handleAiIntentRequest(tpl.prompt, 'app');
-      }, 1000);
-  };
-
   const handleCommit = useCallback((msg: string) => {
       // Run real git commit command
       const escapedMessage = msg.replace(/"/g, '\\"');
@@ -1643,53 +1629,17 @@ const CloudStudio: React.FC<CloudStudioProps> = ({ design, setDesign }) => {
             }} 
           />
         ) : (
-          <>
-              {viewMode === ViewMode.HUB ? (
-                  <Suspense fallback={<PaneLoader />}>
-                  <TeamHub 
-                      projects={projects}
-                      teamMembers={teamMembers} 
-                      currentUser={currentUser}
-                      onLaunchWorkspace={handleLaunchWorkspace} 
-                      onInvite={() => setIsInviteModalOpen(true)}
-                      onCreateProject={() => setIsCreateProjectOpen(true)}
-                      onBrowseTemplates={() => setViewMode(ViewMode.TEMPLATES)}
-                      commits={commits}
-                      onAskHubAgent={handleAiIntentRequest}
-                      onJoinDiscussion={handleAddActivity}
-                      discussions={discussions}
-                      onImportLink={handleImportLink}
-                      agendaItems={agendaItems}
-                      activity={activityFeed}
+          <div className="flex-1 flex overflow-x-auto md:overflow-hidden relative animate-fade-in h-full">
+              {isSidebarVisible && (
+                  <Sidebar 
+                    activePanel={activePanel} 
+                    onPanelChange={handlePanelChange} 
+                    userPlan={currentUser?.plan || 'Enterprise'} 
+                    onRestrictedClick={() => {}} 
+                    pendingChangesCount={unstagedChanges.length + stagedChanges.length}
+                    isChatOpen={isChatOpen}
                   />
-                  </Suspense>
-              ) : viewMode === ViewMode.TEMPLATES ? (
-                  <Suspense fallback={<PaneLoader />}>
-                  <PromptLibrary 
-                    onSelect={handlePromptTemplateSynthesis} 
-                    onBack={() => setViewMode(ViewMode.HUB)} 
-                  />
-                  </Suspense>
-              ) : (
-                  <div className="flex-1 flex overflow-x-auto md:overflow-hidden relative animate-fade-in h-full">
-                      {isSidebarVisible && (
-                          <Sidebar 
-                            activePanel={activePanel} 
-                            onPanelChange={handlePanelChange} 
-                            userPlan={currentUser?.plan || 'Enterprise'} 
-                            onRestrictedClick={() => {}} 
-                            pendingChangesCount={unstagedChanges.length + stagedChanges.length}
-                            isChatOpen={isChatOpen}
-                          />
-                      )}
-                      
-                      {/* HUB Switcher Button in Sidebar Bottom */}
-                      <div className="absolute bottom-20 left-2 w-10 h-10 z-50">
-                          <button onClick={() => setViewMode(ViewMode.HUB)} className="p-2 rounded-lg bg-slate-800 text-slate-400 hover:text-white transition-all shadow-lg border border-white/10 group overflow-hidden relative" title="Return to Team Hub">
-                              <Layers size={20} />
-                              <div className="absolute inset-0 bg-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                          </button>
-                      </div>
+              )}
 
                       {activePanel === Panel.DOCUMENT ? (
                           <div className="flex-1 flex flex-col min-w-0 bg-[#0d1117]/80 backdrop-blur-sm relative z-20">
@@ -1920,8 +1870,6 @@ const CloudStudio: React.FC<CloudStudioProps> = ({ design, setDesign }) => {
                           </>
                       )}
                   </div>
-              )}
-          </>
         )}
       </div>
 
